@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->char('public_id', 26)->unique('uq_users_public_id');
@@ -31,7 +31,7 @@ return new class extends Migration
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->string('email')->primary();
             $table->string('token');
@@ -41,7 +41,7 @@ return new class extends Migration
         Schema::create('sessions', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index('idx_sessions_user_id');
