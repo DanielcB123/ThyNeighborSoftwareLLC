@@ -8,19 +8,16 @@ defineProps<{
 </script>
 
 <template>
-    <section
-        :id="`block-${blockId}`"
-        class="wb-card border-l-4 border-l-[var(--wb-color-secondary)] p-8"
-    >
-        <h2 class="text-2xl font-semibold text-[var(--wb-color-text)]">
+    <section :id="`block-${blockId}`" class="wb-section-frame wb-cta-band">
+        <h2 class="wb-heading-2 text-balance">
             {{ data.heading }}
         </h2>
-        <p class="mt-3 text-base text-[var(--wb-color-text-muted)]">
+        <p class="wb-body-m mt-3 max-w-3xl text-pretty text-[var(--color-text-muted)]">
             {{ data.description }}
         </p>
         <a
             :href="data.actionPath"
-            class="mt-5 inline-flex items-center rounded-md bg-[var(--wb-color-secondary)] px-5 py-3 text-sm font-semibold text-white"
+            class="wb-button wb-button--accent mt-7"
         >
             {{ data.actionLabel }}
         </a>

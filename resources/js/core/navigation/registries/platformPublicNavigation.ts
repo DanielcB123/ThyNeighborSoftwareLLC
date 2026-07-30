@@ -31,11 +31,11 @@ export function getPlatformPublicNavigationItems(): readonly NavigationItem[] {
         },
         {
             id: "client-login",
-            label: "Client Login",
+            label: "Contact",
             target: {
                 kind: "internal",
-                surface: "platform-auth",
-                path: "/login",
+                surface: "platform-public",
+                path: "/contact",
             },
         },
     ];
