@@ -35,5 +35,7 @@ PHP runtime is unavailable in this cloud execution environment (`php: command no
 
 - Unknown non-platform tenant host defaults to `404` instead of platform fallback.
 - Resolver writes and honors negative cache entries for unresolved hosts.
+- `db:seed` now provisions demo tenant/domain/database records when demo seeding is enabled and auto-seed flag is true.
+- Demo seeding now clears stale resolution cache keys for seeded domains so newly provisioned domains resolve immediately.
 - `frontendRuntime.runtimeSurface` and `tenantRuntimeSurface` expose deterministic runtime classification.
 - `app:audit-environment` surfaces conflicting/missing/deprecated tenancy keys without leaking secrets.

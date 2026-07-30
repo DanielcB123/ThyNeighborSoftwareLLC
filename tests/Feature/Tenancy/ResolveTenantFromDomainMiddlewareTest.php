@@ -10,6 +10,7 @@ use App\Tenancy\TenantDatabaseConnectionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Mockery;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ResolveTenantFromDomainMiddlewareTest extends TestCase
@@ -123,5 +124,49 @@ class ResolveTenantFromDomainMiddlewareTest extends TestCase
             ->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('tenantRuntimeSurface', 'unknown_host');
+    }
+
+    public function test_root_route_renders_tenant_frontend_for_resolved_tenant_host(): void
+    {
+        $resolver = Mockery::mock(CentralTenantDatabaseResolver::class);
+        $connectionManager = Mockery::mock(TenantDatabaseConnectionManager::class);
+
+        $this->app->instance(CentralTenantDatabaseResolver::class, $resolver);
+        $this->app->instance(TenantDatabaseConnectionManager::class, $connectionManager);
+
+        $connectionManager->shouldReceive('reset')->twice();
+        $connectionManager->shouldReceive('activate')->once();
+
+        $resolver->shouldReceive('resolveByDomain')
+            ->once()
+            ->with('tenant-a.example.com')
+            ->andReturn(new ResolvedTenantDatabase(
+                tenantPublicId: '01JZZZB87RDKVG7FN6M7F9Y3QX',
+                tenantSlug: 'tenant-a',
+                tenantDisplayName: 'Tenant A',
+                tenantStatus: 'active',
+                tenantLocale: 'en',
+                tenantTimezone: 'UTC',
+                tenantEnabledModules: ['dispatch', 'crm'],
+                tenantEnabledCapabilities: ['billing'],
+                domain: 'tenant-a.example.com',
+                databaseName: 'wbyt_t_01k111',
+                databaseStatus: 'active',
+                secretReference: 'secret://tenant/a',
+                clusterName: 'cluster-a',
+                clusterHost: 'mysql-tenant-a',
+                clusterPort: 3306,
+                clusterSslMode: 'preferred',
+            ));
+
+        $this->withServerVariables(['HTTP_HOST' => 'tenant-a.example.com'])
+            ->get('/')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/PublicHome')
+                ->where('frontendRuntime.surface', 'tenant-public')
+                ->where('frontendRuntime.runtimeSurface', 'tenant_public')
+                ->where('frontendRuntime.tenant.slug', 'tenant-a')
+            );
     }
 }

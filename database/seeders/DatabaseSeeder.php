@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Central\DemoTenantRegistrySeeder;
+use Database\Seeders\Central\DemoTenantDatasetSeeder;
 use Database\Seeders\Central\FeatureSeeder;
 use Database\Seeders\Central\ModuleSeeder;
 use Database\Seeders\Central\PlanSeeder;
@@ -29,6 +30,7 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             PlatformUserSeeder::class,
             DemoTenantRegistrySeeder::class,
+            DemoTenantDatasetSeeder::class,
         ]);
     }
 }

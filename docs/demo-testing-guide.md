@@ -22,6 +22,7 @@ Set these in `.env` for local verification:
 ```dotenv
 APP_ENV=local
 DEMO_SEEDING_ENABLED=true
+DEMO_AUTO_SEED_ON_DATABASE_SEEDER=true
 DEMO_USER_PASSWORD=DemoPassword!2026
 DEMO_DATA_PROFILE=standard
 CENTRAL_DB_DATABASE=wbyt_local_dev
@@ -242,7 +243,10 @@ If seeding fails:
 2. Confirm tenant DB credentials resolve.
 3. Confirm DB user has create/drop privileges for tenant DB operations.
 4. Confirm cache store availability if resolution-cache verification fails.
-5. Re-run:
+5. Confirm demo tenant dataset has been provisioned:
+   - `php artisan demo:seed --profile=standard --tenant=all --force`
+   - or run `php artisan db:seed` when `DEMO_AUTO_SEED_ON_DATABASE_SEEDER=true`.
+6. Re-run:
    - `demo:reset --force`
    - `demo:seed --force`
    - `demo:verify`

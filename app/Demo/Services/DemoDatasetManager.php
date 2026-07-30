@@ -61,6 +61,12 @@ final class DemoDatasetManager
             preserveIdentity: false,
         );
 
+        // Seed operations may follow a negative-cache miss window; clear stale
+        // domain entries so newly provisioned tenant mappings resolve instantly.
+        foreach ($tenants as $scenario) {
+            $this->forgetResolutionCacheForDomain($scenario->domain);
+        }
+
         $this->writeImplementationStatus(
             profile: $profile,
             referenceDate: $effectiveReferenceDate->toDateString(),

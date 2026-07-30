@@ -15,6 +15,8 @@
    - `php artisan app:audit-environment`
 7. Removed raw `env()` calls from runtime tenancy/demo services.
 8. Added/updated feature and unit tests for middleware and resolver behavior.
+9. Added demo dataset auto-provisioning during `db:seed` (guarded by config) so tenant-domain records and tenant DBs are created through the canonical seeding path.
+10. Added cache invalidation after demo seed to remove stale negative domain-resolution entries.
 
 ## Files Updated
 
@@ -25,11 +27,17 @@
 - `app/Demo/Services/DemoTenantProvisioner.php`
 - `app/Demo/Services/DemoDatasetManager.php`
 - `config/tenancy.php`
+- `config/demo.php`
 - `config/app.php`
+- `database/seeders/Central/DemoTenantDatasetSeeder.php`
+- `database/seeders/DatabaseSeeder.php`
 - `routes/console.php`
+- `routes/web.php`
 - `.env.example`
 - `.env.testing`
+- `phpunit.xml`
 - `resources/js/core/runtime/frontendContext.ts`
 - `tests/Feature/Tenancy/ResolveTenantFromDomainMiddlewareTest.php`
 - `tests/Unit/Tenancy/CentralTenantDatabaseResolverTest.php`
+- `tests/Unit/Demo/DemoTenantDatasetSeederTest.php`
 - `tests/Feature/Console/AuditEnvironmentCommandTest.php`

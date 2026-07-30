@@ -41,6 +41,7 @@
         <env name="TEST_TENANT_DB_PREFIX" value="wbyt_test_tenant_"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="DEMO_AUTO_SEED_ON_DATABASE_SEEDER" value="false"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

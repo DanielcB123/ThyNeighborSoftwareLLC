@@ -7,6 +7,8 @@ use App\Demo\Enums\DemoDatasetVersion;
 return [
     'enabled' => env('DEMO_SEEDING_ENABLED', false),
 
+    'auto_seed_on_database_seeder' => (bool) env('DEMO_AUTO_SEED_ON_DATABASE_SEEDER', true),
+
     'password' => env(
         'DEMO_USER_PASSWORD',
         'DemoPassword!2026'
