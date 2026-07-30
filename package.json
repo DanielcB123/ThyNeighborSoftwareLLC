@@ -8,10 +8,10 @@
         "typecheck": "vue-tsc --noEmit",
         "lint": "eslint \"resources/js/**/*.{ts,tsx}\"",
         "format:check": "prettier --check \"resources/js/**/*.{ts,tsx,d.ts}\" \"docs/**/*.md\"",
-        "test:unit": "vitest run \"resources/js/**/__tests__/*.unit.test.ts\"",
-        "test:component": "vitest run \"resources/js/**/__tests__/*.component.test.ts\"",
-        "test:browser": "vitest run \"resources/js/**/__tests__/*.browser.test.ts\"",
-        "test:accessibility": "vitest run \"resources/js/**/__tests__/*.a11y.test.ts\""
+        "test:unit": "vitest run unit.test.ts",
+        "test:component": "vitest run --environment jsdom component.test.ts",
+        "test:browser": "vitest run --environment jsdom browser.test.ts",
+        "test:accessibility": "vitest run --environment jsdom a11y.test.ts"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -39,5 +39,8 @@
         "vitest-axe": "^0.1.0",
         "vue": "^3.4.0",
         "vue-tsc": "^3.3.8"
+    },
+    "dependencies": {
+        "ziggy-js": "^2.6.3"
     }
 }

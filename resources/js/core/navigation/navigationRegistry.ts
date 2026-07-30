@@ -1,25 +1,28 @@
-import { canAccess } from '@/core/access/accessControl';
-import type { AccessContext, AccessRequirement } from '@/core/access/accessControl';
-import type { BuildUrlOptions, UrlBuilder } from '@/core/url/urlBuilder';
+import { canAccess } from "@/core/access/accessControl";
+import type {
+    AccessContext,
+    AccessRequirement,
+} from "@/core/access/accessControl";
+import type { BuildUrlOptions, UrlBuilder } from "@/core/url/urlBuilder";
 
 type InternalTargetSurface =
-    | 'platform-public'
-    | 'platform-auth'
-    | 'platform-admin'
-    | 'tenant-public'
-    | 'tenant-auth'
-    | 'tenant-admin'
-    | 'tenant-preview';
+    | "platform-public"
+    | "platform-auth"
+    | "platform-admin"
+    | "tenant-public"
+    | "tenant-auth"
+    | "tenant-admin"
+    | "tenant-preview";
 
 interface InternalTarget {
-    kind: 'internal';
+    kind: "internal";
     surface: InternalTargetSurface;
     path: string;
     options?: BuildUrlOptions;
 }
 
 interface ExternalTarget {
-    kind: 'external';
+    kind: "external";
     href: string;
 }
 
@@ -40,29 +43,34 @@ export interface ResolvedNavigationItem {
     children: readonly ResolvedNavigationItem[];
 }
 
-function resolveTarget(target: NavigationTarget, urlBuilder: UrlBuilder): string {
-    if (target.kind === 'external') {
+function resolveTarget(
+    target: NavigationTarget,
+    urlBuilder: UrlBuilder,
+): string {
+    if (target.kind === "external") {
         return urlBuilder.external(target.href);
     }
 
     switch (target.surface) {
-        case 'platform-public':
+        case "platform-public":
             return urlBuilder.platformPublic(target.path, target.options);
-        case 'platform-auth':
+        case "platform-auth":
             return urlBuilder.platformAuth(target.path, target.options);
-        case 'platform-admin':
+        case "platform-admin":
             return urlBuilder.platformAdmin(target.path, target.options);
-        case 'tenant-public':
+        case "tenant-public":
             return urlBuilder.tenantPublic(target.path, target.options);
-        case 'tenant-auth':
+        case "tenant-auth":
             return urlBuilder.tenantAuth(target.path, target.options);
-        case 'tenant-admin':
+        case "tenant-admin":
             return urlBuilder.tenantAdmin(target.path, target.options);
-        case 'tenant-preview':
+        case "tenant-preview":
             return urlBuilder.tenantPreview(target.path, target.options);
         default: {
             const neverSurface: never = target.surface;
-            throw new Error(`Unsupported navigation surface: ${String(neverSurface)}`);
+            throw new Error(
+                `Unsupported navigation surface: ${String(neverSurface)}`,
+            );
         }
     }
 }
@@ -78,6 +86,10 @@ export function resolveNavigation(
             id: item.id,
             label: item.label,
             href: resolveTarget(item.target, urlBuilder),
-            children: resolveNavigation(item.children ?? [], accessContext, urlBuilder),
+            children: resolveNavigation(
+                item.children ?? [],
+                accessContext,
+                urlBuilder,
+            ),
         }));
 }

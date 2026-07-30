@@ -1,14 +1,18 @@
-import '../css/app.css';
-import './bootstrap';
+import "../css/app.css";
+import "./bootstrap";
 
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createApp, h } from 'vue';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-import { registerUrlBuilder } from '@/core/url/urlBuilderPlugin';
-import type { FrontendRuntimeContext, InertiaSharedProps } from '@/core/runtime/frontendContext';
+import { createInertiaApp } from "@inertiajs/vue3";
+import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
+import { createApp, h } from "vue";
+import { ZiggyVue } from "ziggy-js";
+import { registerUrlBuilder } from "@/core/url/urlBuilderPlugin";
+import type {
+    FrontendRuntimeContext,
+    InertiaSharedProps,
+} from "@/core/runtime/frontendContext";
+import type { DefineComponent } from "vue";
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 function resolveRuntimeContext(props: unknown): FrontendRuntimeContext {
     const sharedProps = props as Partial<InertiaSharedProps>;
@@ -22,7 +26,11 @@ function resolveRuntimeContext(props: unknown): FrontendRuntimeContext {
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.vue`,
+            import.meta.glob<DefineComponent>("./Pages/**/*.vue"),
+        ) as Promise<DefineComponent>,
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
@@ -34,6 +42,6 @@ createInertiaApp({
         return app;
     },
     progress: {
-        color: '#4B5563',
+        color: "#4B5563",
     },
 });

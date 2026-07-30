@@ -5,30 +5,30 @@ This issue requests a complete multi-surface frontend system for WeBuildYouThriv
 ## Implemented in this issue
 
 - Added frontend TypeScript baseline:
-  - `tsconfig.json`
-  - `resources/js/env.d.ts`
-  - Type-aware Inertia shared prop augmentation in `resources/js/types/inertia.d.ts`
+    - `tsconfig.json`
+    - `resources/js/env.d.ts`
+    - Type-aware Inertia shared prop augmentation in `resources/js/types/inertia.d.ts`
 - Added frontend quality tooling and scripts:
-  - Type checking (`vue-tsc`)
-  - Linting (`eslint` + `typescript-eslint`)
-  - Formatting checks (`prettier`)
-  - Unit, component, browser-smoke, and accessibility test scripts (`vitest`)
+    - Type checking (`vue-tsc`)
+    - Linting (`eslint` + `typescript-eslint`)
+    - Formatting checks (`prettier`)
+    - Unit, component, browser-smoke, and accessibility test scripts (`vitest`)
 - Added typed runtime context contract for platform/tenant surface separation:
-  - `resources/js/core/runtime/frontendContext.ts`
-  - Inertia shared `frontendRuntime` payload via `HandleInertiaRequests`
-  - Frontend runtime config values in `config/frontend.php`
+    - `resources/js/core/runtime/frontendContext.ts`
+    - Inertia shared `frontendRuntime` payload via `HandleInertiaRequests`
+    - Frontend runtime config values in `config/frontend.php`
 - Implemented typed URL generation layer for explicit URL surfaces:
-  - `resources/js/core/url/urlBuilder.ts`
-  - `resources/js/core/url/urlBuilderPlugin.ts`
-  - Distinguishes platform public/auth/admin, tenant public/auth/admin/preview, and external URLs.
-  - Enforces absolute http/https URL requirements and rejects unsafe path traversal.
+    - `resources/js/core/url/urlBuilder.ts`
+    - `resources/js/core/url/urlBuilderPlugin.ts`
+    - Distinguishes platform public/auth/admin, tenant public/auth/admin/preview, and external URLs.
+    - Enforces absolute http/https URL requirements and rejects unsafe path traversal.
 - Implemented access-aware navigation registry foundation:
-  - `resources/js/core/access/accessControl.ts`
-  - `resources/js/core/navigation/navigationRegistry.ts`
-  - `resources/js/core/navigation/components/NavigationMenu.ts`
+    - `resources/js/core/access/accessControl.ts`
+    - `resources/js/core/navigation/navigationRegistry.ts`
+    - `resources/js/core/navigation/components/NavigationMenu.ts`
 - Updated app bootstrap to TypeScript and runtime URL builder registration:
-  - `resources/js/app.ts`
-  - `vite.config.js` input + alias updates
+    - `resources/js/app.ts`
+    - `vite.config.js` input + alias updates
 
 ## Verification coverage added
 

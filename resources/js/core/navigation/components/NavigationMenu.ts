@@ -1,26 +1,30 @@
-import { defineComponent, h, type PropType } from 'vue';
-import type { ResolvedNavigationItem } from '@/core/navigation/navigationRegistry';
+import { defineComponent, h, type PropType, type VNode } from "vue";
+import type { ResolvedNavigationItem } from "@/core/navigation/navigationRegistry";
 
-function renderItems(items: readonly ResolvedNavigationItem[]) {
+function renderItems(items: readonly ResolvedNavigationItem[]): VNode[] {
     return items.map((item) =>
-        h('li', { key: item.id, class: 'navigation-menu__item' }, [
+        h("li", { key: item.id, class: "navigation-menu__item" }, [
             h(
-                'a',
+                "a",
                 {
                     href: item.href,
-                    class: 'navigation-menu__link',
+                    class: "navigation-menu__link",
                 },
                 item.label,
             ),
             item.children.length > 0
-                ? h('ul', { class: 'navigation-menu__children' }, renderItems(item.children))
+                ? h(
+                      "ul",
+                      { class: "navigation-menu__children" },
+                      renderItems(item.children),
+                  )
                 : null,
         ]),
     );
 }
 
 export const NavigationMenu = defineComponent({
-    name: 'NavigationMenu',
+    name: "NavigationMenu",
     props: {
         items: {
             type: Array as PropType<readonly ResolvedNavigationItem[]>,
@@ -28,13 +32,21 @@ export const NavigationMenu = defineComponent({
         },
         ariaLabel: {
             type: String,
-            default: 'Primary navigation',
+            default: "Primary navigation",
         },
     },
     setup(props) {
         return () =>
-            h('nav', { 'aria-label': props.ariaLabel, class: 'navigation-menu' }, [
-                h('ul', { class: 'navigation-menu__list' }, renderItems(props.items)),
-            ]);
+            h(
+                "nav",
+                { "aria-label": props.ariaLabel, class: "navigation-menu" },
+                [
+                    h(
+                        "ul",
+                        { class: "navigation-menu__list" },
+                        renderItems(props.items),
+                    ),
+                ],
+            );
     },
 });

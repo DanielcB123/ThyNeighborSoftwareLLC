@@ -20,4 +20,10 @@ export default tseslint.config(
             '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
         },
     },
+    {
+        files: ['resources/js/**/*.d.ts'],
+        rules: {
+            '@typescript-eslint/no-empty-object-type': 'off',
+        },
+    },
 );

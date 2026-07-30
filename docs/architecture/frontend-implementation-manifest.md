@@ -6,15 +6,15 @@ This manifest tracks phased frontend delivery for WEB-12 in a repository that st
 
 ## Phase status
 
-| Phase | Status | Delivered in repo |
-| --- | --- | --- |
-| 1. Frontend foundation baseline | Completed | TypeScript tooling, typed runtime context contract, typed URL builder, access-aware navigation registry, component + accessibility test harness |
-| 2. Tenant public website composition system | Not started | Pending |
-| 3. Tenant admin application shell and module surfaces | Not started | Pending |
-| 4. Page builder block registry and schema versioning | Not started | Pending |
-| 5. Theming system and token orchestration | Not started | Pending |
-| 6. Enterprise operational dashboards and cross-module widgets | Not started | Pending |
-| 7. Browser-level QA matrix and release hardening | Not started | Pending |
+| Phase                                                         | Status      | Delivered in repo                                                                                                                               |
+| ------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Frontend foundation baseline                               | Completed   | TypeScript tooling, typed runtime context contract, typed URL builder, access-aware navigation registry, component + accessibility test harness |
+| 2. Tenant public website composition system                   | Not started | Pending                                                                                                                                         |
+| 3. Tenant admin application shell and module surfaces         | Not started | Pending                                                                                                                                         |
+| 4. Page builder block registry and schema versioning          | Not started | Pending                                                                                                                                         |
+| 5. Theming system and token orchestration                     | Not started | Pending                                                                                                                                         |
+| 6. Enterprise operational dashboards and cross-module widgets | Not started | Pending                                                                                                                                         |
+| 7. Browser-level QA matrix and release hardening              | Not started | Pending                                                                                                                                         |
 
 ## Implementation rules established in phase 1
 

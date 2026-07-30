@@ -1,4 +1,5 @@
-export type RuntimeSurface = 'platform' | 'tenant-public' | 'tenant-admin' | 'tenant-auth';
+export type RuntimeSurface =
+    "platform" | "tenant-public" | "tenant-admin" | "tenant-auth";
 
 export interface PlatformUrlContext {
     publicBaseUrl: string;

@@ -1,25 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { axe, toHaveNoViolations } from 'vitest-axe';
-import { NavigationMenu } from '@/core/navigation/components/NavigationMenu';
+import { describe, expect, it } from "vitest";
+import { mount } from "@vue/test-utils";
+import { axe } from "vitest-axe";
+import { NavigationMenu } from "@/core/navigation/components/NavigationMenu";
 
-expect.extend(toHaveNoViolations);
-
-describe('NavigationMenu accessibility', () => {
-    it('renders accessible nav markup', async () => {
+describe("NavigationMenu accessibility", () => {
+    it("renders accessible nav markup", async () => {
         const wrapper = mount(NavigationMenu, {
             props: {
                 items: [
                     {
-                        id: 'home',
-                        label: 'Home',
-                        href: 'https://smithplumbing.com',
+                        id: "home",
+                        label: "Home",
+                        href: "https://smithplumbing.com",
                         children: [],
                     },
                     {
-                        id: 'services',
-                        label: 'Services',
-                        href: 'https://smithplumbing.com/services',
+                        id: "services",
+                        label: "Services",
+                        href: "https://smithplumbing.com/services",
                         children: [],
                     },
                 ],
@@ -27,6 +25,6 @@ describe('NavigationMenu accessibility', () => {
         });
 
         const results = await axe(wrapper.element);
-        expect(results).toHaveNoViolations();
+        expect(results.violations).toHaveLength(0);
     });
 });

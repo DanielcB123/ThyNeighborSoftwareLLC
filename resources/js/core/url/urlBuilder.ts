@@ -1,19 +1,25 @@
-import type { PlatformUrlContext, TenantUrlContext } from '@/core/runtime/frontendContext';
+import type {
+    PlatformUrlContext,
+    TenantUrlContext,
+} from "@/core/runtime/frontendContext";
 
 export type QueryPrimitive = string | number | boolean;
-export type QueryValue = QueryPrimitive | readonly QueryPrimitive[] | null | undefined;
+export type QueryValue =
+    QueryPrimitive | readonly QueryPrimitive[] | null | undefined;
 export type UrlQuery = Record<string, QueryValue>;
 
-type UrlBrand<TSurface extends string> = string & { readonly __surface: TSurface };
+type UrlBrand<TSurface extends string> = string & {
+    readonly __surface: TSurface;
+};
 
-export type PlatformPublicUrl = UrlBrand<'platform-public'>;
-export type PlatformAuthUrl = UrlBrand<'platform-auth'>;
-export type PlatformAdminUrl = UrlBrand<'platform-admin'>;
-export type TenantPublicUrl = UrlBrand<'tenant-public'>;
-export type TenantAuthUrl = UrlBrand<'tenant-auth'>;
-export type TenantAdminUrl = UrlBrand<'tenant-admin'>;
-export type TenantPreviewUrl = UrlBrand<'tenant-preview'>;
-export type ExternalUrl = UrlBrand<'external'>;
+export type PlatformPublicUrl = UrlBrand<"platform-public">;
+export type PlatformAuthUrl = UrlBrand<"platform-auth">;
+export type PlatformAdminUrl = UrlBrand<"platform-admin">;
+export type TenantPublicUrl = UrlBrand<"tenant-public">;
+export type TenantAuthUrl = UrlBrand<"tenant-auth">;
+export type TenantAdminUrl = UrlBrand<"tenant-admin">;
+export type TenantPreviewUrl = UrlBrand<"tenant-preview">;
+export type ExternalUrl = UrlBrand<"external">;
 
 export interface BuildUrlOptions {
     query?: UrlQuery;
@@ -48,24 +54,24 @@ function normalizePath(path: string): string {
     const trimmedPath = path.trim();
 
     if (trimmedPath.length === 0) {
-        return '/';
+        return "/";
     }
 
-    if (!trimmedPath.startsWith('/')) {
+    if (!trimmedPath.startsWith("/")) {
         throw new Error('Path must start with "/".');
     }
 
-    if (trimmedPath.includes('\\')) {
-        throw new Error('Path cannot contain backslashes.');
+    if (trimmedPath.includes("\\")) {
+        throw new Error("Path cannot contain backslashes.");
     }
 
     if (
-        trimmedPath.includes('/../') ||
-        trimmedPath.endsWith('/..') ||
-        trimmedPath.includes('/./') ||
-        trimmedPath.endsWith('/.')
+        trimmedPath.includes("/../") ||
+        trimmedPath.endsWith("/..") ||
+        trimmedPath.includes("/./") ||
+        trimmedPath.endsWith("/.")
     ) {
-        throw new Error('Path cannot include dot-segment traversal.');
+        throw new Error("Path cannot include dot-segment traversal.");
     }
 
     return trimmedPath;
@@ -73,13 +79,16 @@ function normalizePath(path: string): string {
 
 function normalizeHash(hash: string | undefined): string {
     if (!hash) {
-        return '';
+        return "";
     }
 
-    return hash.startsWith('#') ? hash : `#${hash}`;
+    return hash.startsWith("#") ? hash : `#${hash}`;
 }
 
-function appendQuery(searchParams: URLSearchParams, query: UrlQuery | undefined): void {
+function appendQuery(
+    searchParams: URLSearchParams,
+    query: UrlQuery | undefined,
+): void {
     if (!query) {
         return;
     }
@@ -105,9 +114,8 @@ function buildUrl<TSurface extends string>(
     baseUrl: string,
     path: string,
     options: BuildUrlOptions | undefined,
-    surface: TSurface,
 ): UrlBrand<TSurface> {
-    assertAbsoluteHttpUrl(baseUrl, 'Base URL');
+    assertAbsoluteHttpUrl(baseUrl, "Base URL");
 
     const url = new URL(normalizePath(path), baseUrl);
     appendQuery(url.searchParams, options?.query);
@@ -116,9 +124,13 @@ function buildUrl<TSurface extends string>(
     return url.toString() as UrlBrand<TSurface>;
 }
 
-function requireTenantContext(tenant: TenantUrlContext | null): TenantUrlContext {
+function requireTenantContext(
+    tenant: TenantUrlContext | null,
+): TenantUrlContext {
     if (!tenant) {
-        throw new Error('Tenant URL context is required for tenant surface URLs.');
+        throw new Error(
+            "Tenant URL context is required for tenant surface URLs.",
+        );
     }
 
     return tenant;
@@ -127,39 +139,59 @@ function requireTenantContext(tenant: TenantUrlContext | null): TenantUrlContext
 export function createUrlBuilder(context: UrlBuilderContext): UrlBuilder {
     return {
         platformPublic(path, options) {
-            return buildUrl(context.platform.publicBaseUrl, path, options, 'platform-public');
+            return buildUrl<"platform-public">(
+                context.platform.publicBaseUrl,
+                path,
+                options,
+            );
         },
 
         platformAuth(path, options) {
-            return buildUrl(context.platform.authBaseUrl, path, options, 'platform-auth');
+            return buildUrl<"platform-auth">(
+                context.platform.authBaseUrl,
+                path,
+                options,
+            );
         },
 
         platformAdmin(path, options) {
-            return buildUrl(context.platform.adminBaseUrl, path, options, 'platform-admin');
+            return buildUrl<"platform-admin">(
+                context.platform.adminBaseUrl,
+                path,
+                options,
+            );
         },
 
         tenantPublic(path, options) {
             const tenant = requireTenantContext(context.tenant);
-            return buildUrl(tenant.primaryBaseUrl, path, options, 'tenant-public');
+            return buildUrl<"tenant-public">(
+                tenant.primaryBaseUrl,
+                path,
+                options,
+            );
         },
 
         tenantAuth(path, options) {
             const tenant = requireTenantContext(context.tenant);
-            return buildUrl(tenant.authBaseUrl, path, options, 'tenant-auth');
+            return buildUrl<"tenant-auth">(tenant.authBaseUrl, path, options);
         },
 
         tenantAdmin(path, options) {
             const tenant = requireTenantContext(context.tenant);
-            return buildUrl(tenant.adminBaseUrl, path, options, 'tenant-admin');
+            return buildUrl<"tenant-admin">(tenant.adminBaseUrl, path, options);
         },
 
         tenantPreview(path, options) {
             const tenant = requireTenantContext(context.tenant);
-            return buildUrl(tenant.previewBaseUrl, path, options, 'tenant-preview');
+            return buildUrl<"tenant-preview">(
+                tenant.previewBaseUrl,
+                path,
+                options,
+            );
         },
 
         external(url) {
-            assertAbsoluteHttpUrl(url, 'External URL');
+            assertAbsoluteHttpUrl(url, "External URL");
             return url as ExternalUrl;
         },
     };

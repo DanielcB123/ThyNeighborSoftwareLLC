@@ -15,7 +15,10 @@ export interface AccessRequirement {
     anyCapabilities?: readonly string[];
 }
 
-function includesAll(values: ReadonlySet<string>, required: readonly string[] | undefined): boolean {
+function includesAll(
+    values: ReadonlySet<string>,
+    required: readonly string[] | undefined,
+): boolean {
     if (!required || required.length === 0) {
         return true;
     }
@@ -23,7 +26,10 @@ function includesAll(values: ReadonlySet<string>, required: readonly string[] | 
     return required.every((entry) => values.has(entry));
 }
 
-function includesAny(values: ReadonlySet<string>, required: readonly string[] | undefined): boolean {
+function includesAny(
+    values: ReadonlySet<string>,
+    required: readonly string[] | undefined,
+): boolean {
     if (!required || required.length === 0) {
         return true;
     }
@@ -31,7 +37,10 @@ function includesAny(values: ReadonlySet<string>, required: readonly string[] | 
     return required.some((entry) => values.has(entry));
 }
 
-export function canAccess(requirement: AccessRequirement | undefined, context: AccessContext): boolean {
+export function canAccess(
+    requirement: AccessRequirement | undefined,
+    context: AccessContext,
+): boolean {
     if (!requirement) {
         return true;
     }

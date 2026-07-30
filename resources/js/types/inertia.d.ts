@@ -1,5 +1,5 @@
-import type { InertiaSharedProps } from '@/core/runtime/frontendContext';
+import type { InertiaSharedProps } from "@/core/runtime/frontendContext";
 
-declare module '@inertiajs/core' {
+declare module "@inertiajs/core" {
     interface PageProps extends InertiaSharedProps {}
 }
