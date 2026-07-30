@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('platform_permissions', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('permission_key')->unique('uq_platform_permissions_key');
@@ -26,7 +26,7 @@ return new class extends Migration
         Schema::create('platform_roles', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('role_key')->unique('uq_platform_roles_key');
@@ -39,7 +39,7 @@ return new class extends Migration
         Schema::create('platform_role_permissions', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('role_key');
@@ -54,7 +54,7 @@ return new class extends Migration
         Schema::create('platform_user_roles', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->foreignId('user_id')
@@ -71,7 +71,7 @@ return new class extends Migration
         Schema::create('platform_modules', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('module_key')->unique('uq_platform_modules_key');
@@ -85,7 +85,7 @@ return new class extends Migration
         Schema::create('platform_features', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('feature_key')->unique('uq_platform_features_key');
@@ -99,7 +99,7 @@ return new class extends Migration
         Schema::create('platform_module_features', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('module_key');
@@ -113,7 +113,7 @@ return new class extends Migration
         Schema::create('platform_plans', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('plan_key')->unique('uq_platform_plans_key');
@@ -127,7 +127,7 @@ return new class extends Migration
         Schema::create('platform_plan_features', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('plan_key');
@@ -141,7 +141,7 @@ return new class extends Migration
         Schema::create('demo_audit_events', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->string('event_type');

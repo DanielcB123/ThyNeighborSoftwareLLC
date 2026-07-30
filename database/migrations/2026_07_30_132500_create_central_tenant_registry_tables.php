@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('database_clusters', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->char('public_id', 26)->unique('uq_database_clusters_public_id');
@@ -29,7 +29,7 @@ return new class extends Migration
         Schema::create('tenants', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->char('public_id', 26)->unique('uq_tenants_public_id');
@@ -51,7 +51,7 @@ return new class extends Migration
         Schema::create('tenant_domains', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->foreignId('tenant_id')
@@ -72,7 +72,7 @@ return new class extends Migration
         Schema::create('tenant_databases', function (Blueprint $table): void {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci';
+            $table->collation = 'utf8mb4_unicode_ci';
 
             $table->id();
             $table->foreignId('tenant_id')

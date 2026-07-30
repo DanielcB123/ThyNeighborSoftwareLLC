@@ -150,7 +150,7 @@ final class DemoTenantProvisioner
             ]
         );
 
-        $cluster = DatabaseCluster::query()->firstOrCreate(
+        $cluster = DatabaseCluster::query()->updateOrCreate(
             ['name' => 'demo-local-cluster'],
             [
                 'host' => (string) env('TENANT_DB_HOST', env('CENTRAL_DB_HOST', 'mysql')),

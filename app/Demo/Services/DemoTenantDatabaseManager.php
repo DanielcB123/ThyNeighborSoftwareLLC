@@ -46,7 +46,7 @@ final class DemoTenantDatabaseManager
             'password' => $credentials['password'],
             'unix_socket' => '',
             'charset' => (string) config('database.connections.central.charset', 'utf8mb4'),
-            'collation' => (string) config('database.connections.central.collation', 'utf8mb4_0900_ai_ci'),
+            'collation' => (string) config('database.connections.central.collation', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
@@ -60,7 +60,7 @@ final class DemoTenantDatabaseManager
         DB::purge($adminConnectionName);
         if ($createIfMissing) {
             DB::connection($adminConnectionName)->statement(sprintf(
-                'CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci',
+                'CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
                 $databaseName
             ));
         } else {
@@ -111,7 +111,7 @@ final class DemoTenantDatabaseManager
             'password' => $credentials['password'],
             'unix_socket' => '',
             'charset' => (string) config('database.connections.central.charset', 'utf8mb4'),
-            'collation' => (string) config('database.connections.central.collation', 'utf8mb4_0900_ai_ci'),
+            'collation' => (string) config('database.connections.central.collation', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,

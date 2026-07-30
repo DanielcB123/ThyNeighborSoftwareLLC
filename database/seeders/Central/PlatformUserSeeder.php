@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 final class PlatformUserSeeder extends Seeder
 {
@@ -36,14 +37,16 @@ final class PlatformUserSeeder extends Seeder
         ];
 
         foreach ($users as $entry) {
-            $user = User::query()->updateOrCreate(
-                ['email' => $entry['email']],
-                [
-                    'name' => $entry['name'],
-                    'password' => Hash::make($configuration->password),
-                    'email_verified_at' => $timestamp,
-                ]
-            );
+            $user = User::query()->firstOrNew(['email' => $entry['email']]);
+
+            if (! $user->exists && empty($user->public_id)) {
+                $user->public_id = (string) Str::ulid();
+            }
+
+            $user->name = $entry['name'];
+            $user->password = Hash::make($configuration->password);
+            $user->email_verified_at = $timestamp;
+            $user->save();
 
             DB::connection('central')
                 ->table('platform_user_roles')
