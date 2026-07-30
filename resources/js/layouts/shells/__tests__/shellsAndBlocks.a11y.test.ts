@@ -47,7 +47,8 @@ describe("shell and block accessibility", () => {
                                             schemaVersion: 1,
                                             data: {
                                                 eyebrow: "Foundation",
-                                                heading: "Scale-ready frontend architecture",
+                                                heading:
+                                                    "Scale-ready frontend architecture",
                                                 supportingText:
                                                     "Composable blocks and typed routes.",
                                                 primaryActionLabel: "Explore",

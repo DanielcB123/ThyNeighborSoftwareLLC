@@ -7,8 +7,12 @@ describe("resolveShellBySurface", () => {
         expect(resolveShellBySurface("tenant-public")).toBe(
             "tenant-public-shell",
         );
-        expect(resolveShellBySurface("tenant-auth")).toBe("tenant-public-shell");
-        expect(resolveShellBySurface("tenant-admin")).toBe("tenant-admin-shell");
+        expect(resolveShellBySurface("tenant-auth")).toBe(
+            "tenant-public-shell",
+        );
+        expect(resolveShellBySurface("tenant-admin")).toBe(
+            "tenant-admin-shell",
+        );
         expect(resolveShellBySurface("tenant-preview")).toBe(
             "tenant-public-shell",
         );

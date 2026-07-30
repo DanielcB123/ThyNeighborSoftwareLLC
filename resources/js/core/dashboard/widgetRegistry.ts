@@ -64,12 +64,14 @@ const widgetDefinitions: readonly DashboardWidgetDefinition[] = [
 
             return `${snapshot.pendingDispatches} jobs pending`;
         },
-        resolveState: (snapshot) => resolveCountState(snapshot.pendingDispatches),
+        resolveState: (snapshot) =>
+            resolveCountState(snapshot.pendingDispatches),
     },
     {
         id: "service-requests",
         title: "Service Requests",
-        helperText: "Customer requests submitted in the current operating window.",
+        helperText:
+            "Customer requests submitted in the current operating window.",
         access: {
             requiresAuthentication: true,
             allModules: ["crm"],
@@ -82,7 +84,8 @@ const widgetDefinitions: readonly DashboardWidgetDefinition[] = [
 
             return `${snapshot.activeServiceRequests} active requests`;
         },
-        resolveState: (snapshot) => resolveCountState(snapshot.activeServiceRequests),
+        resolveState: (snapshot) =>
+            resolveCountState(snapshot.activeServiceRequests),
     },
     {
         id: "monthly-revenue",

@@ -82,8 +82,10 @@ function parseHeroBlockData(input: unknown): HeroBlockData | null {
         return null;
     }
 
-    const secondaryActionLabel = readString(input, "secondaryActionLabel") ?? undefined;
-    const secondaryActionPath = readString(input, "secondaryActionPath") ?? undefined;
+    const secondaryActionLabel =
+        readString(input, "secondaryActionLabel") ?? undefined;
+    const secondaryActionPath =
+        readString(input, "secondaryActionPath") ?? undefined;
 
     return {
         eyebrow,
@@ -164,7 +166,9 @@ function parseFeatureGridItem(input: unknown): FeatureGridItem | null {
     };
 }
 
-function parseFeatureGridBlockData(input: unknown): FeatureGridBlockData | null {
+function parseFeatureGridBlockData(
+    input: unknown,
+): FeatureGridBlockData | null {
     if (!isRecord(input)) {
         return null;
     }
@@ -192,51 +196,55 @@ function parseFeatureGridBlockData(input: unknown): FeatureGridBlockData | null 
     };
 }
 
-const blockDefinitions: ReadonlyMap<KnownBlockType, BlockDefinition<KnownBlockData>> =
-    new Map<KnownBlockType, BlockDefinition<KnownBlockData>>([
-        [
-            "hero",
-            {
-                type: "hero",
-                schemaVersion: 1,
-                component: HeroBlock,
-                parseData: (input) => parseHeroBlockData(input),
-            },
-        ],
-        [
-            "rich-text",
-            {
-                type: "rich-text",
-                schemaVersion: 1,
-                component: RichTextBlock,
-                parseData: (input) => parseRichTextBlockData(input),
-            },
-        ],
-        [
-            "cta-section",
-            {
-                type: "cta-section",
-                schemaVersion: 1,
-                component: CTASectionBlock,
-                parseData: (input) => parseCTASectionBlockData(input),
-            },
-        ],
-        [
-            "feature-grid",
-            {
-                type: "feature-grid",
-                schemaVersion: 1,
-                component: FeatureGridBlock,
-                parseData: (input) => parseFeatureGridBlockData(input),
-            },
-        ],
-    ]);
+const blockDefinitions: ReadonlyMap<
+    KnownBlockType,
+    BlockDefinition<KnownBlockData>
+> = new Map<KnownBlockType, BlockDefinition<KnownBlockData>>([
+    [
+        "hero",
+        {
+            type: "hero",
+            schemaVersion: 1,
+            component: HeroBlock,
+            parseData: (input) => parseHeroBlockData(input),
+        },
+    ],
+    [
+        "rich-text",
+        {
+            type: "rich-text",
+            schemaVersion: 1,
+            component: RichTextBlock,
+            parseData: (input) => parseRichTextBlockData(input),
+        },
+    ],
+    [
+        "cta-section",
+        {
+            type: "cta-section",
+            schemaVersion: 1,
+            component: CTASectionBlock,
+            parseData: (input) => parseCTASectionBlockData(input),
+        },
+    ],
+    [
+        "feature-grid",
+        {
+            type: "feature-grid",
+            schemaVersion: 1,
+            component: FeatureGridBlock,
+            parseData: (input) => parseFeatureGridBlockData(input),
+        },
+    ],
+]);
 
 export function resolvePageBlocks(
     blocks: readonly RawContentBlock[],
 ): readonly RenderableBlock[] {
     return blocks.map((block) => {
-        const blockDefinition = blockDefinitions.get(block.type as KnownBlockType);
+        const blockDefinition = blockDefinitions.get(
+            block.type as KnownBlockType,
+        );
 
         if (!blockDefinition) {
             return {

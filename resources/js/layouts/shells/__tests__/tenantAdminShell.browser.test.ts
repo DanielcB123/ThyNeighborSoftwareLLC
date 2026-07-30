@@ -60,7 +60,7 @@ describe("tenant admin shell browser behavior", () => {
         });
 
         const anchor = document.createElement("a");
-        anchor.href = wrapper.get("a").attributes("href");
+        anchor.href = wrapper.get("a").attributes("href") ?? "";
 
         expect(anchor.hostname).toBe("smithplumbing.com");
         expect(anchor.pathname).toBe("/admin/dashboard");

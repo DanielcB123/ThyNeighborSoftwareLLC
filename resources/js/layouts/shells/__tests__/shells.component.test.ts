@@ -47,7 +47,11 @@ beforeEach(() => {
                 email: "taylor@example.com",
             },
             access: {
-                permissions: ["dispatch.view", "customers.view", "billing.view"],
+                permissions: [
+                    "dispatch.view",
+                    "customers.view",
+                    "billing.view",
+                ],
                 modules: ["dispatch", "crm"],
                 capabilities: ["billing"],
             },
@@ -73,7 +77,9 @@ describe("surface shells", () => {
             },
         });
 
-        expect(wrapper.get('nav[aria-label="Platform primary navigation"]')).toBeTruthy();
+        expect(
+            wrapper.get('nav[aria-label="Platform primary navigation"]'),
+        ).toBeTruthy();
     });
 
     it("renders tenant public shell with tenant navigation landmark", () => {

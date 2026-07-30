@@ -33,10 +33,7 @@ export interface FeatureGridBlockData {
 }
 
 export type KnownBlockType =
-    | "hero"
-    | "rich-text"
-    | "cta-section"
-    | "feature-grid";
+    "hero" | "rich-text" | "cta-section" | "feature-grid";
 
 export interface RawContentBlock {
     id: string;

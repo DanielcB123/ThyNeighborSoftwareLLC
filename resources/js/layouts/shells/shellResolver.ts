@@ -1,11 +1,11 @@
 import type { RuntimeSurface } from "@/core/runtime/frontendContext";
 
 export type ShellIdentifier =
-    | "platform-public-shell"
-    | "tenant-public-shell"
-    | "tenant-admin-shell";
+    "platform-public-shell" | "tenant-public-shell" | "tenant-admin-shell";
 
-export function resolveShellBySurface(surface: RuntimeSurface): ShellIdentifier {
+export function resolveShellBySurface(
+    surface: RuntimeSurface,
+): ShellIdentifier {
     if (surface === "tenant-admin") {
         return "tenant-admin-shell";
     }

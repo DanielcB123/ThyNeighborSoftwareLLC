@@ -48,12 +48,11 @@ export function resolveTenantThemeStyle(
     tenantTheme: TenantThemeContext | null | undefined,
 ): CSSProperties {
     const tokenMap = resolveTenantThemeTokens(tenantTheme);
+    const styleMap: Record<string, string> = {};
 
-    return Object.entries(tokenMap).reduce<CSSProperties>(
-        (style, [tokenName, tokenValue]) => {
-            style[tokenName as keyof CSSProperties] = tokenValue;
-            return style;
-        },
-        {},
-    );
+    for (const [tokenName, tokenValue] of Object.entries(tokenMap)) {
+        styleMap[tokenName] = tokenValue;
+    }
+
+    return styleMap as CSSProperties;
 }
