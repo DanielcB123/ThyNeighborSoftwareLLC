@@ -29,6 +29,9 @@ class Tenant extends CentralModel
         'provisioning_state',
         'migration_state',
         'health_state',
+        'is_demo',
+        'demo_dataset_version',
+        'demo_seeded_at',
     ];
 
     /**
@@ -39,6 +42,8 @@ class Tenant extends CentralModel
         return [
             'enabled_modules' => 'array',
             'enabled_capabilities' => 'array',
+            'is_demo' => 'boolean',
+            'demo_seeded_at' => 'datetime',
         ];
     }
 
