@@ -116,9 +116,11 @@ describe("surface shells", () => {
         });
 
         expect(wrapper.text()).toContain("Portfolio");
-        expect(wrapper.find('a[href="https://webuildyouthrive.com/portfolio"]').exists()).toBe(
-            true,
-        );
+        expect(
+            wrapper
+                .find('a[href="https://webuildyouthrive.com/portfolio"]')
+                .exists(),
+        ).toBe(true);
     });
 
     it("renders tenant public shell with tenant navigation landmark", () => {
@@ -199,7 +201,9 @@ describe("surface shells", () => {
             },
         });
 
-        expect(wrapperWithoutFinanceRole.text()).not.toContain("Finance Approvals");
+        expect(wrapperWithoutFinanceRole.text()).not.toContain(
+            "Finance Approvals",
+        );
 
         mockPageProps.auth.access = {
             ...(mockPageProps.auth.access ?? {
@@ -208,7 +212,12 @@ describe("surface shells", () => {
                 capabilities: [],
                 roles: [],
             }),
-            permissions: ["dispatch.view", "customers.view", "billing.view", "finance.approve"],
+            permissions: [
+                "dispatch.view",
+                "customers.view",
+                "billing.view",
+                "finance.approve",
+            ],
             roles: ["finance-manager"],
         };
 

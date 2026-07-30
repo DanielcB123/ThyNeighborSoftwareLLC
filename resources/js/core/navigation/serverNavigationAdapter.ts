@@ -33,13 +33,22 @@ const TARGET_SURFACES = new Set<InternalSurface>([
     "tenant-preview",
 ]);
 
+function isInternalSurface(value: string): value is InternalSurface {
+    return TARGET_SURFACES.has(value as InternalSurface);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
 
 function parseQueryValue(
     value: unknown,
-): string | number | boolean | readonly (string | number | boolean)[] | undefined {
+):
+    | string
+    | number
+    | boolean
+    | readonly (string | number | boolean)[]
+    | undefined {
     if (
         typeof value === "string" ||
         typeof value === "number" ||
@@ -101,7 +110,7 @@ function parseTarget(value: unknown): NavigationTarget | null {
     if (kind === "internal") {
         if (
             typeof value.surface !== "string" ||
-            !TARGET_SURFACES.has(value.surface)
+            !isInternalSurface(value.surface)
         ) {
             return null;
         }
@@ -112,7 +121,7 @@ function parseTarget(value: unknown): NavigationTarget | null {
 
         return {
             kind: "internal",
-            surface: value.surface as InternalSurface,
+            surface: value.surface,
             path: value.path.trim(),
             options: isRecord(value.options)
                 ? {

@@ -52,6 +52,10 @@ export function usePrimaryNavigation() {
                 ? adaptedContract.value.primary
                 : fallbackNavigation;
 
-        return resolveNavigation(serverNavigation, accessContext.value, urlBuilder);
+        return resolveNavigation(
+            serverNavigation,
+            accessContext.value,
+            urlBuilder,
+        );
     });
 }
