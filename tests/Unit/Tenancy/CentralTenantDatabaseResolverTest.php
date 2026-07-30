@@ -103,4 +103,76 @@ class CentralTenantDatabaseResolverTest extends TestCase
         $this->assertSame('Registry Tenant', $resolved->tenantDisplayName);
         $this->assertSame('mysql-tenant-b', $resolved->clusterHost);
     }
+
+    public function test_it_returns_null_when_negative_cache_entry_is_present(): void
+    {
+        $cacheStore = Mockery::mock();
+
+        Cache::shouldReceive('store')
+            ->once()
+            ->with('redis')
+            ->andReturn($cacheStore);
+
+        $cacheStore->shouldReceive('get')
+            ->once()
+            ->andReturn([
+                'kind' => 'not_found',
+            ]);
+
+        DB::shouldReceive('connection')->never();
+
+        $resolver = new CentralTenantDatabaseResolver();
+        $resolved = $resolver->resolveByDomain('missing-tenant.example.com');
+
+        $this->assertNull($resolved);
+    }
+
+    public function test_it_caches_negative_resolution_when_registry_has_no_match(): void
+    {
+        config()->set('tenancy.negative_cache_ttl', 45);
+
+        $cacheStore = Mockery::mock();
+        $queryBuilder = Mockery::mock();
+        $connection = Mockery::mock();
+
+        Cache::shouldReceive('store')
+            ->twice()
+            ->with('redis')
+            ->andReturn($cacheStore);
+
+        $cacheStore->shouldReceive('get')
+            ->once()
+            ->andReturn(null);
+
+        $cacheStore->shouldReceive('put')
+            ->once()
+            ->withArgs(function (string $cacheKey, array $payload, mixed $ttl): bool {
+                return $cacheKey === 'tenant-domain-resolution:no-match.example.com'
+                    && ($payload['kind'] ?? null) === 'not_found'
+                    && $ttl !== null;
+            });
+
+        DB::shouldReceive('connection')
+            ->once()
+            ->with('central')
+            ->andReturn($connection);
+
+        $connection->shouldReceive('table')
+            ->once()
+            ->with('tenant_domains as td')
+            ->andReturn($queryBuilder);
+
+        $queryBuilder->shouldReceive('join')->andReturnSelf();
+        $queryBuilder->shouldReceive('where')->andReturnSelf();
+        $queryBuilder->shouldReceive('whereNull')->once()->andReturnSelf();
+        $queryBuilder->shouldReceive('select')->once()->andReturnSelf();
+        $queryBuilder->shouldReceive('first')
+            ->once()
+            ->andReturnNull();
+
+        $resolver = new CentralTenantDatabaseResolver();
+        $resolved = $resolver->resolveByDomain('no-match.example.com');
+
+        $this->assertNull($resolved);
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,7 +34,102 @@ $demoTenantFrontendContext = static function (string $surface): array {
     ];
 };
 
-Route::get('/', function () {
+/**
+ * @param  array<string, mixed>|null  $tenantContext
+ * @return array<int, array<string, mixed>>
+ */
+$demoTenantPublicBlocks = static function (?array $tenantContext = null): array {
+    $displayName = trim((string) ($tenantContext['displayName'] ?? 'Your Service Team'));
+    $tenantTagline = $displayName !== ''
+        ? sprintf('Welcome to %s', $displayName)
+        : 'Welcome to your tenant site';
+
+    return [
+        [
+            'id' => 'tenant-hero',
+            'type' => 'hero',
+            'schemaVersion' => 1,
+            'data' => [
+                'eyebrow' => 'Customer-ready tenant frontend',
+                'heading' => $tenantTagline,
+                'supportingText' => 'This domain is tenant-resolved from the central registry and rendered through the tenant runtime surface.',
+                'primaryActionLabel' => 'Request Service',
+                'primaryActionPath' => '/request-service',
+                'secondaryActionLabel' => 'Explore Services',
+                'secondaryActionPath' => '/services',
+            ],
+        ],
+        [
+            'id' => 'tenant-rich-text',
+            'type' => 'rich-text',
+            'schemaVersion' => 1,
+            'data' => [
+                'heading' => 'Built with tenant-safe runtime boundaries',
+                'paragraphs' => [
+                    'Tenant domains resolve through central registry records before frontend rendering proceeds.',
+                    'Shared platform capabilities stay isolated while tenant-specific identity and navigation remain scoped.',
+                ],
+            ],
+        ],
+        [
+            'id' => 'tenant-features',
+            'type' => 'feature-grid',
+            'schemaVersion' => 1,
+            'data' => [
+                'heading' => 'What this seeded tenant demonstrates',
+                'intro' => 'Domain resolution, tenant runtime classification, and frontend composition contracts.',
+                'features' => [
+                    [
+                        'title' => 'Central registry-backed domain routing',
+                        'description' => 'Tenant hosts are looked up through central tenant-domain metadata.',
+                        'label' => 'Tenancy',
+                    ],
+                    [
+                        'title' => 'Capability-aware navigation',
+                        'description' => 'Navigation items are filtered by tenant modules and capabilities.',
+                        'label' => 'Access',
+                    ],
+                    [
+                        'title' => 'Shared block rendering',
+                        'description' => 'Tenant public pages use typed blocks while preserving runtime isolation.',
+                        'label' => 'Frontend',
+                    ],
+                    [
+                        'title' => 'Deterministic resolution cache',
+                        'description' => 'Positive and negative domain resolution cache entries are explicitly tracked.',
+                        'label' => 'Reliability',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'id' => 'tenant-cta',
+            'type' => 'cta-section',
+            'schemaVersion' => 1,
+            'data' => [
+                'heading' => 'Need to validate another seeded tenant domain?',
+                'description' => 'Switch to another demo tenant host and verify runtime surface, navigation, and content shell behavior.',
+                'actionLabel' => 'Open Tenant Dashboard',
+                'actionPath' => '/dashboard',
+            ],
+        ],
+    ];
+};
+
+Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
+    /** @var array<string, mixed>|null $tenantContext */
+    $tenantContext = $request->attributes->get('frontendTenantContext');
+    $runtimeSurface = (string) $request->attributes->get('tenantRuntimeSurface', 'platform');
+
+    if (
+        is_array($tenantContext) &&
+        in_array($runtimeSurface, ['tenant_public', 'tenant_auth'], true)
+    ) {
+        return Inertia::render('Tenant/PublicHome', [
+            'blocks' => $demoTenantPublicBlocks($tenantContext),
+        ]);
+    }
+
     return Inertia::render('Platform/Home', [
         'blocks' => [
             [
@@ -217,7 +313,7 @@ Route::get('/contact', function () {
     ]);
 })->name('platform.contact');
 
-Route::get('/tenant-site', function () use ($demoTenantFrontendContext) {
+Route::get('/tenant-site', function () use ($demoTenantFrontendContext, $demoTenantPublicBlocks) {
     request()->attributes->set(
         'frontendTenantContext',
         $demoTenantFrontendContext('tenant-public')
@@ -279,76 +375,9 @@ Route::get('/tenant-site', function () use ($demoTenantFrontendContext) {
     ]);
 
     return Inertia::render('Tenant/PublicHome', [
-        'blocks' => [
-            [
-                'id' => 'tenant-hero',
-                'type' => 'hero',
-                'schemaVersion' => 1,
-                'data' => [
-                    'eyebrow' => 'Serving Houston and surrounding communities',
-                    'heading' => 'Fast-response plumbing and HVAC service from certified technicians',
-                    'supportingText' => 'Book installations, repairs, and emergency service appointments with transparent communication from dispatch to completion.',
-                    'primaryActionLabel' => 'Request Service',
-                    'primaryActionPath' => '/request-service',
-                    'secondaryActionLabel' => 'Explore Services',
-                    'secondaryActionPath' => '/services',
-                ],
-            ],
-            [
-                'id' => 'tenant-rich-text',
-                'type' => 'rich-text',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Built for homeowners, property managers, and facilities teams',
-                    'paragraphs' => [
-                        'Our technicians are background-checked, insured, and equipped to resolve both routine maintenance and urgent service issues.',
-                        'Every service request includes digital updates so customers can track scheduling, arrival windows, and completed work.',
-                    ],
-                ],
-            ],
-            [
-                'id' => 'tenant-features',
-                'type' => 'feature-grid',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Why customers choose us',
-                    'intro' => 'Operational consistency backed by digital workflows and experienced field teams.',
-                    'features' => [
-                        [
-                            'title' => '24/7 emergency coverage',
-                            'description' => 'After-hours dispatch prioritization for active leaks, outages, and safety incidents.',
-                            'label' => 'Emergency',
-                        ],
-                        [
-                            'title' => 'Preventive maintenance programs',
-                            'description' => 'Recurring inspections that reduce breakdowns and extend equipment lifespan.',
-                            'label' => 'Maintenance',
-                        ],
-                        [
-                            'title' => 'Transparent estimates',
-                            'description' => 'Clear scope, pricing, and approval steps before on-site work begins.',
-                            'label' => 'Trust',
-                        ],
-                        [
-                            'title' => 'Commercial service coordination',
-                            'description' => 'Support for property portfolios, warehouses, and multi-location operations.',
-                            'label' => 'Commercial',
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'id' => 'tenant-cta',
-                'type' => 'cta-section',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Need service today?',
-                    'description' => 'Submit a request in under two minutes and receive a scheduling confirmation from our dispatch team.',
-                    'actionLabel' => 'Start a service request',
-                    'actionPath' => '/request-service',
-                ],
-            ],
-        ],
+        'blocks' => $demoTenantPublicBlocks(
+            request()->attributes->get('frontendTenantContext')
+        ),
     ]);
 })->name('tenant.public.home');
 

@@ -62,6 +62,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * @return array{
      *   surface: string,
+     *   runtimeSurface: string,
      *   platformUrls: array{publicBaseUrl: string, authBaseUrl: string, adminBaseUrl: string},
      *   tenant: array<string, mixed>|null
      * }
@@ -80,6 +81,7 @@ class HandleInertiaRequests extends Middleware
         if (! is_array($tenantContext)) {
             return [
                 'surface' => 'platform',
+                'runtimeSurface' => (string) $request->attributes->get('tenantRuntimeSurface', 'platform'),
                 'platformUrls' => $platformUrls,
                 'tenant' => null,
             ];
@@ -87,6 +89,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             'surface' => (string) Arr::get($tenantContext, 'surface', 'tenant-public'),
+            'runtimeSurface' => (string) $request->attributes->get('tenantRuntimeSurface', 'tenant_public'),
             'platformUrls' => $platformUrls,
             'tenant' => [
                 'publicId' => (string) Arr::get($tenantContext, 'publicId'),

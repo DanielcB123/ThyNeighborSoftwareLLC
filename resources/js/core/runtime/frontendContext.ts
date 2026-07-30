@@ -5,6 +5,14 @@ export type RuntimeSurface =
     | "tenant-auth"
     | "tenant-preview";
 
+export type TenantRuntimeSurface =
+    | "platform"
+    | "tenant_public"
+    | "tenant_admin"
+    | "tenant_auth"
+    | "tenant_api"
+    | "unknown_host";
+
 export interface PlatformUrlContext {
     publicBaseUrl: string;
     authBaseUrl: string;
@@ -38,6 +46,7 @@ export interface TenantThemeContext {
 
 export interface FrontendRuntimeContext {
     surface: RuntimeSurface;
+    runtimeSurface?: TenantRuntimeSurface;
     platformUrls: PlatformUrlContext;
     tenant: TenantContext | null;
 }

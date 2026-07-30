@@ -11,6 +11,10 @@ use Throwable;
 
 final class CentralTenantDatabaseResolver
 {
+    private const CACHE_KIND_POSITIVE = 'resolved';
+
+    private const CACHE_KIND_NEGATIVE = 'not_found';
+
     public function resolveByDomain(string $domain): ?ResolvedTenantDatabase
     {
         $normalizedDomain = $this->normalizeDomain($domain);
@@ -22,14 +26,16 @@ final class CentralTenantDatabaseResolver
         $cacheKey = $this->cacheKey($normalizedDomain);
         $cached = $this->resolveFromCache($cacheKey);
 
-        if ($cached !== null) {
-            return $cached;
+        if ($cached['hit']) {
+            return $cached['resolved'];
         }
 
         $resolved = $this->resolveFromCentralRegistry($normalizedDomain);
 
         if ($resolved !== null) {
-            $this->cacheResolution($cacheKey, $resolved);
+            $this->cachePositiveResolution($cacheKey, $resolved);
+        } else {
+            $this->cacheNegativeResolution($cacheKey);
         }
 
         return $resolved;
@@ -40,30 +46,76 @@ final class CentralTenantDatabaseResolver
         return (string) config('tenancy.resolution_cache_prefix', 'tenant-domain-resolution:').$domain;
     }
 
-    private function resolveFromCache(string $cacheKey): ?ResolvedTenantDatabase
+    /**
+     * @return array{hit:bool,resolved:ResolvedTenantDatabase|null}
+     */
+    private function resolveFromCache(string $cacheKey): array
     {
         try {
             $payload = Cache::store((string) config('tenancy.resolution_cache_store', 'redis'))
                 ->get($cacheKey);
         } catch (Throwable) {
-            return null;
+            return ['hit' => false, 'resolved' => null];
         }
 
         if (! is_array($payload)) {
-            return null;
+            return ['hit' => false, 'resolved' => null];
         }
 
-        return ResolvedTenantDatabase::fromCachePayload($payload);
+        $kind = (string) ($payload['kind'] ?? '');
+        if ($kind === self::CACHE_KIND_NEGATIVE) {
+            return ['hit' => true, 'resolved' => null];
+        }
+
+        if ($kind === self::CACHE_KIND_POSITIVE) {
+            $resolved = ResolvedTenantDatabase::fromCachePayload(
+                is_array($payload['data'] ?? null) ? $payload['data'] : []
+            );
+
+            return $resolved === null
+                ? ['hit' => false, 'resolved' => null]
+                : ['hit' => true, 'resolved' => $resolved];
+        }
+
+        // Backward compatibility for legacy cache payloads.
+        $resolved = ResolvedTenantDatabase::fromCachePayload($payload);
+
+        return $resolved === null
+            ? ['hit' => false, 'resolved' => null]
+            : ['hit' => true, 'resolved' => $resolved];
     }
 
-    private function cacheResolution(string $cacheKey, ResolvedTenantDatabase $resolved): void
+    private function cachePositiveResolution(string $cacheKey, ResolvedTenantDatabase $resolved): void
     {
         try {
             Cache::store((string) config('tenancy.resolution_cache_store', 'redis'))
                 ->put(
                     $cacheKey,
-                    $resolved->toCachePayload(),
-                    now()->addSeconds((int) config('tenancy.resolution_cache_ttl_seconds', 300))
+                    [
+                        'kind' => self::CACHE_KIND_POSITIVE,
+                        'data' => $resolved->toCachePayload(),
+                    ],
+                    now()->addSeconds($this->positiveCacheTtl())
+                );
+        } catch (Throwable) {
+            // Redis cache is optional. Central registry remains authoritative.
+        }
+    }
+
+    private function cacheNegativeResolution(string $cacheKey): void
+    {
+        $negativeTtl = (int) config('tenancy.negative_cache_ttl', 30);
+
+        if ($negativeTtl <= 0) {
+            return;
+        }
+
+        try {
+            Cache::store((string) config('tenancy.resolution_cache_store', 'redis'))
+                ->put(
+                    $cacheKey,
+                    ['kind' => self::CACHE_KIND_NEGATIVE],
+                    now()->addSeconds($negativeTtl)
                 );
         } catch (Throwable) {
             // Redis cache is optional. Central registry remains authoritative.
@@ -148,6 +200,16 @@ final class CentralTenantDatabaseResolver
         }
 
         return $normalized;
+    }
+
+    private function positiveCacheTtl(): int
+    {
+        $ttl = (int) config(
+            'tenancy.resolution_cache_ttl',
+            (int) config('tenancy.resolution_cache_ttl_seconds', 300)
+        );
+
+        return max(1, $ttl);
     }
 
     /**

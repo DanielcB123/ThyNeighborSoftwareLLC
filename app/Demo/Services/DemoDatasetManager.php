@@ -43,7 +43,7 @@ final class DemoDatasetManager
 
         $profile = $profileOverride ?? \App\Demo\Data\DemoConfigurationData::fromConfig()->profile;
 
-        if ($profile === DemoDataProfile::Large && (bool) env('CI', false)) {
+        if ($profile === DemoDataProfile::Large && (bool) config('app.ci', false)) {
             throw new DemoSeedingNotAllowedException(
                 'The large demo profile is blocked in CI environments.'
             );
@@ -60,6 +60,12 @@ final class DemoDatasetManager
             skipFlags: $skipFlags,
             preserveIdentity: false,
         );
+
+        // Seed operations may follow a negative-cache miss window; clear stale
+        // domain entries so newly provisioned tenant mappings resolve instantly.
+        foreach ($tenants as $scenario) {
+            $this->forgetResolutionCacheForDomain($scenario->domain);
+        }
 
         $this->writeImplementationStatus(
             profile: $profile,

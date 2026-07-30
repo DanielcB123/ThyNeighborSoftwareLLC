@@ -28,17 +28,16 @@ final class ResolveTenantFromDomain
             $host = $this->normalizeDomain($request->getHost());
 
             if ($host === '' || $this->isPlatformDomain($host)) {
+                $request->attributes->set('tenantRuntimeSurface', 'platform');
                 return $next($request);
             }
 
             $resolved = $this->resolver->resolveByDomain($host);
 
             if ($resolved === null) {
-                if (app()->environment('local', 'testing')) {
-                    return $next($request);
-                }
+                $request->attributes->set('tenantRuntimeSurface', 'unknown_host');
 
-                throw new NotFoundHttpException('No active tenant exists for this domain.');
+                return $this->handleUnknownHost($request, $next);
             }
 
             if ($resolved->tenantStatus !== 'active' || $resolved->databaseStatus !== 'active') {
@@ -60,9 +59,12 @@ final class ResolveTenantFromDomain
                 'clusterName' => $resolved->clusterName,
             ]);
 
+            $runtimeSurface = $this->resolveTenantRuntimeSurface($request);
+            $request->attributes->set('tenantRuntimeSurface', $runtimeSurface);
+
             if (! is_array($request->attributes->get('frontendTenantContext'))) {
                 $request->attributes->set('frontendTenantContext', [
-                    'surface' => 'tenant-public',
+                    'surface' => $this->frontendSurfaceForRuntime($runtimeSurface),
                     'publicId' => $resolved->tenantPublicId,
                     'slug' => $resolved->tenantSlug,
                     'displayName' => $resolved->tenantDisplayName,
@@ -85,6 +87,17 @@ final class ResolveTenantFromDomain
         }
     }
 
+    private function handleUnknownHost(Request $request, Closure $next): mixed
+    {
+        $behavior = strtolower((string) config('tenancy.unknown_host_behavior', 'reject'));
+
+        if ($behavior === 'passthrough') {
+            return $next($request);
+        }
+
+        throw new NotFoundHttpException('No active tenant exists for this domain.');
+    }
+
     private function isPlatformDomain(string $domain): bool
     {
         $platformDomains = config('tenancy.platform_domains', []);
@@ -94,6 +107,37 @@ final class ResolveTenantFromDomain
         }
 
         return in_array($domain, array_map('strtolower', $platformDomains), true);
+    }
+
+    private function resolveTenantRuntimeSurface(Request $request): string
+    {
+        if ($request->is('api/*')) {
+            return 'tenant_api';
+        }
+
+        if ($request->is('admin*') || $request->is('dashboard*')) {
+            return 'tenant_admin';
+        }
+
+        if (
+            $request->is('login') ||
+            $request->is('register') ||
+            $request->is('password/*') ||
+            $request->is('auth/*')
+        ) {
+            return 'tenant_auth';
+        }
+
+        return 'tenant_public';
+    }
+
+    private function frontendSurfaceForRuntime(string $runtimeSurface): string
+    {
+        return match ($runtimeSurface) {
+            'tenant_admin' => 'tenant-admin',
+            'tenant_auth' => 'tenant-auth',
+            default => 'tenant-public',
+        };
     }
 
     private function normalizeDomain(string $domain): string
