@@ -5,24 +5,9 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createApp, h } from "vue";
 import { ZiggyVue } from "ziggy-js";
-import { registerUrlBuilder } from "@/core/url/urlBuilderPlugin";
-import type {
-    FrontendRuntimeContext,
-    InertiaSharedProps,
-} from "@/core/runtime/frontendContext";
 import type { DefineComponent } from "vue";
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
-
-function resolveRuntimeContext(props: unknown): FrontendRuntimeContext {
-    const sharedProps = props as Partial<InertiaSharedProps>;
-
-    if (!sharedProps.frontendRuntime) {
-        throw new Error('Missing "frontendRuntime" shared Inertia prop.');
-    }
-
-    return sharedProps.frontendRuntime;
-}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -35,8 +20,6 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue);
-
-        registerUrlBuilder(app, resolveRuntimeContext(props.initialPage.props));
 
         app.mount(el);
         return app;

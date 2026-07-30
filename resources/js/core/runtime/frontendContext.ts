@@ -1,5 +1,5 @@
 export type RuntimeSurface =
-    "platform" | "tenant-public" | "tenant-admin" | "tenant-auth";
+    "platform" | "tenant-public" | "tenant-admin" | "tenant-auth" | "tenant-preview";
 
 export interface PlatformUrlContext {
     publicBaseUrl: string;
@@ -31,9 +31,22 @@ export interface FrontendRuntimeContext {
     tenant: TenantContext | null;
 }
 
+export interface AuthUser {
+    publicId: string;
+    name: string;
+    email: string;
+}
+
+export interface AuthAccessContext {
+    permissions: readonly string[];
+    modules: readonly string[];
+    capabilities: readonly string[];
+}
+
 export interface InertiaSharedProps {
     auth: {
-        user: unknown | null;
+        user: AuthUser | null;
+        access?: AuthAccessContext | null;
     };
     frontendRuntime: FrontendRuntimeContext;
 }

@@ -68,13 +68,13 @@ describe("resolveNavigation", () => {
             {
                 id: "dashboard",
                 label: "Dashboard",
-                href: "https://coastalairandheat.com/overview",
+                href: "https://coastalairandheat.com/admin/overview",
                 children: [],
             },
             {
                 id: "dispatch",
                 label: "Dispatch",
-                href: "https://coastalairandheat.com/dispatch",
+                href: "https://coastalairandheat.com/admin/dispatch",
                 children: [],
             },
         ]);

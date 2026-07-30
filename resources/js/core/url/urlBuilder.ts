@@ -61,6 +61,12 @@ function normalizePath(path: string): string {
         throw new Error('Path must start with "/".');
     }
 
+    if (trimmedPath.includes("?") || trimmedPath.includes("#")) {
+        throw new Error(
+            "Path cannot include query strings or hash fragments. Use options.query/options.hash instead.",
+        );
+    }
+
     if (trimmedPath.includes("\\")) {
         throw new Error("Path cannot contain backslashes.");
     }
@@ -75,6 +81,20 @@ function normalizePath(path: string): string {
     }
 
     return trimmedPath;
+}
+
+function createBaseUrlForSurface(baseUrl: string): URL {
+    assertAbsoluteHttpUrl(baseUrl, "Base URL");
+    const normalizedBaseUrl = new URL(baseUrl);
+
+    normalizedBaseUrl.search = "";
+    normalizedBaseUrl.hash = "";
+
+    if (!normalizedBaseUrl.pathname.endsWith("/")) {
+        normalizedBaseUrl.pathname = `${normalizedBaseUrl.pathname}/`;
+    }
+
+    return normalizedBaseUrl;
 }
 
 function normalizeHash(hash: string | undefined): string {
@@ -115,9 +135,11 @@ function buildUrl<TSurface extends string>(
     path: string,
     options: BuildUrlOptions | undefined,
 ): UrlBrand<TSurface> {
-    assertAbsoluteHttpUrl(baseUrl, "Base URL");
-
-    const url = new URL(normalizePath(path), baseUrl);
+    const normalizedPath = normalizePath(path);
+    const normalizedBaseUrl = createBaseUrlForSurface(baseUrl);
+    const relativePathSegment =
+        normalizedPath === "/" ? "" : normalizedPath.slice(1);
+    const url = new URL(relativePathSegment, normalizedBaseUrl);
     appendQuery(url.searchParams, options?.query);
     url.hash = normalizeHash(options?.hash);
 

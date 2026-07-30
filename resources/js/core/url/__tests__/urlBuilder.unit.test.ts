@@ -64,4 +64,39 @@ describe("createUrlBuilder", () => {
             "External URL must be an absolute http/https URL.",
         );
     });
+
+    it("preserves configured path prefixes for admin and preview surfaces", () => {
+        const builder = createUrlBuilder({
+            platform: {
+                ...platform,
+                adminBaseUrl: "https://webuildyouthrive.com/platform-admin",
+            },
+            tenant: {
+                ...tenant,
+                adminBaseUrl: "https://smithplumbing.com/admin",
+                previewBaseUrl: "https://smithplumbing.com/preview",
+            },
+        });
+
+        expect(builder.platformAdmin("/accounts")).toBe(
+            "https://webuildyouthrive.com/platform-admin/accounts",
+        );
+        expect(builder.tenantAdmin("/customers")).toBe(
+            "https://smithplumbing.com/admin/customers",
+        );
+        expect(builder.tenantPreview("/landing-page")).toBe(
+            "https://smithplumbing.com/preview/landing-page",
+        );
+    });
+
+    it("rejects paths that contain inline query or hash values", () => {
+        const builder = createUrlBuilder({ platform, tenant });
+
+        expect(() => builder.platformPublic("/services?type=hvac")).toThrow(
+            "Path cannot include query strings or hash fragments. Use options.query/options.hash instead.",
+        );
+        expect(() => builder.platformPublic("/services#contact")).toThrow(
+            "Path cannot include query strings or hash fragments. Use options.query/options.hash instead.",
+        );
+    });
 });

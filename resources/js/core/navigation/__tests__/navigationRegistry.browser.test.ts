@@ -40,6 +40,6 @@ describe("navigation browser smoke", () => {
         anchor.href = resolved[0].href;
 
         expect(anchor.hostname).toBe("bellavistarestaurant.com");
-        expect(anchor.pathname).toBe("/orders");
+        expect(anchor.pathname).toBe("/admin/orders");
     });
 });
