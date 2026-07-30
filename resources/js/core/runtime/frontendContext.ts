@@ -22,7 +22,14 @@ export interface TenantContext {
     timezone: string;
     enabledModules: readonly string[];
     enabledCapabilities: readonly string[];
+    theme?: TenantThemeContext | null;
     urls: TenantUrlContext;
+}
+
+export interface TenantThemeContext {
+    tokens: Readonly<Record<string, string>>;
+    logoUrl: string | null;
+    faviconUrl: string | null;
 }
 
 export interface FrontendRuntimeContext {

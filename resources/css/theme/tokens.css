@@ -1,0 +1,74 @@
+:root {
+    --wb-color-bg: #f7f8fc;
+    --wb-color-surface: #ffffff;
+    --wb-color-surface-muted: #eef2ff;
+    --wb-color-border: #d4d9e8;
+    --wb-color-text: #0f172a;
+    --wb-color-text-muted: #475569;
+    --wb-color-primary: #1d4ed8;
+    --wb-color-primary-contrast: #ffffff;
+    --wb-color-secondary: #0ea5e9;
+    --wb-color-danger: #dc2626;
+    --wb-color-success: #15803d;
+    --wb-color-warning: #d97706;
+    --wb-shadow-surface: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --wb-radius-lg: 1rem;
+    --wb-radius-md: 0.75rem;
+}
+
+[data-surface="platform"],
+[data-surface="tenant-public"],
+[data-surface="tenant-auth"],
+[data-surface="tenant-admin"],
+[data-surface="tenant-preview"] {
+    background-color: var(--wb-color-bg);
+    color: var(--wb-color-text);
+}
+
+.wb-shell-surface {
+    min-height: 100vh;
+    background-color: var(--wb-color-bg);
+    color: var(--wb-color-text);
+}
+
+.wb-card {
+    background-color: var(--wb-color-surface);
+    border: 1px solid var(--wb-color-border);
+    border-radius: var(--wb-radius-md);
+    box-shadow: var(--wb-shadow-surface);
+}
+
+.wb-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--wb-color-border);
+    background-color: var(--wb-color-surface-muted);
+    color: var(--wb-color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+}
+
+.navigation-menu__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navigation-menu__link {
+    color: var(--wb-color-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navigation-menu__link:hover,
+.navigation-menu__link:focus-visible {
+    color: var(--wb-color-primary);
+    text-decoration: underline;
+}

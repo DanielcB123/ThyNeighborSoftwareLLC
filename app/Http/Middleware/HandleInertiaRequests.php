@@ -30,10 +30,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'publicId' => (string) ($user->public_id ?? ''),
+                    'name' => (string) $user->name,
+                    'email' => (string) $user->email,
+                ] : null,
+                'access' => $this->resolveFrontendAccessContext($request),
             ],
             'frontendRuntime' => $this->resolveFrontendRuntime($request),
         ];
@@ -84,6 +91,11 @@ class HandleInertiaRequests extends Middleware
                 ),
                 'enabledModules' => Arr::wrap(Arr::get($tenantContext, 'enabledModules', [])),
                 'enabledCapabilities' => Arr::wrap(Arr::get($tenantContext, 'enabledCapabilities', [])),
+                'theme' => [
+                    'tokens' => Arr::wrap(Arr::get($tenantContext, 'theme.tokens', [])),
+                    'logoUrl' => Arr::get($tenantContext, 'theme.logoUrl'),
+                    'faviconUrl' => Arr::get($tenantContext, 'theme.faviconUrl'),
+                ],
                 'urls' => [
                     'primaryBaseUrl' => (string) Arr::get($tenantContext, 'urls.primaryBaseUrl'),
                     'authBaseUrl' => (string) Arr::get($tenantContext, 'urls.authBaseUrl'),
@@ -91,6 +103,25 @@ class HandleInertiaRequests extends Middleware
                     'previewBaseUrl' => (string) Arr::get($tenantContext, 'urls.previewBaseUrl'),
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @return array{permissions: array<int, string>, modules: array<int, string>, capabilities: array<int, string>}|null
+     */
+    private function resolveFrontendAccessContext(Request $request): ?array
+    {
+        /** @var array<string, mixed>|null $accessContext */
+        $accessContext = $request->attributes->get('frontendAccessContext');
+
+        if (! is_array($accessContext)) {
+            return null;
+        }
+
+        return [
+            'permissions' => array_values(Arr::wrap(Arr::get($accessContext, 'permissions', []))),
+            'modules' => array_values(Arr::wrap(Arr::get($accessContext, 'modules', []))),
+            'capabilities' => array_values(Arr::wrap(Arr::get($accessContext, 'capabilities', []))),
         ];
     }
 }
