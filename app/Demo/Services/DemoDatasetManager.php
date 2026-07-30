@@ -43,7 +43,7 @@ final class DemoDatasetManager
 
         $profile = $profileOverride ?? \App\Demo\Data\DemoConfigurationData::fromConfig()->profile;
 
-        if ($profile === DemoDataProfile::Large && (bool) env('CI', false)) {
+        if ($profile === DemoDataProfile::Large && (bool) config('app.ci', false)) {
             throw new DemoSeedingNotAllowedException(
                 'The large demo profile is blocked in CI environments.'
             );

@@ -28,6 +28,8 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+    'ci' => (bool) env('CI', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
