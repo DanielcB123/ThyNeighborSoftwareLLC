@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jobs', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_0900_ai_ci';
+
             $table->id();
-            $table->string('queue')->index();
+            $table->string('queue')->index('idx_jobs_queue');
             $table->longText('payload');
             $table->unsignedSmallInteger('attempts');
             $table->unsignedInteger('reserved_at')->nullable();
@@ -22,6 +26,10 @@ return new class extends Migration
         });
 
         Schema::create('job_batches', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_0900_ai_ci';
+
             $table->string('id')->primary();
             $table->string('name');
             $table->integer('total_jobs');
@@ -35,15 +43,19 @@ return new class extends Migration
         });
 
         Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_0900_ai_ci';
+
             $table->id();
-            $table->string('uuid')->unique();
+            $table->string('uuid')->unique('uq_failed_jobs_uuid');
             $table->string('connection');
             $table->string('queue');
             $table->longText('payload');
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
 
-            $table->index(['connection', 'queue', 'failed_at']);
+            $table->index(['connection', 'queue', 'failed_at'], 'idx_failed_jobs_connection_queue_failed_at');
         });
     }
 
