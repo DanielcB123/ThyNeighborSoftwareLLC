@@ -2,12 +2,18 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Frontend\Navigation\ServerDrivenNavigationBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(
+        private readonly ServerDrivenNavigationBuilder $serverDrivenNavigationBuilder
+    ) {
+    }
+
     /**
      * The root template that is loaded on the first page visit.
      *
@@ -31,6 +37,8 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $frontendRuntime = $this->resolveFrontendRuntime($request);
+        $frontendAccessContext = $this->resolveFrontendAccessContext($request);
 
         return [
             ...parent::share($request),
@@ -40,9 +48,14 @@ class HandleInertiaRequests extends Middleware
                     'name' => (string) $user->name,
                     'email' => (string) $user->email,
                 ] : null,
-                'access' => $this->resolveFrontendAccessContext($request),
+                'access' => $frontendAccessContext,
             ],
-            'frontendRuntime' => $this->resolveFrontendRuntime($request),
+            'frontendRuntime' => $frontendRuntime,
+            'navigation' => $this->serverDrivenNavigationBuilder->build(
+                $request,
+                $frontendRuntime,
+                $frontendAccessContext
+            ),
         ];
     }
 
@@ -107,7 +120,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{permissions: array<int, string>, modules: array<int, string>, capabilities: array<int, string>}|null
+     * @return array{permissions: array<int, string>, modules: array<int, string>, capabilities: array<int, string>, roles: array<int, string>}|null
      */
     private function resolveFrontendAccessContext(Request $request): ?array
     {
@@ -122,6 +135,7 @@ class HandleInertiaRequests extends Middleware
             'permissions' => array_values(Arr::wrap(Arr::get($accessContext, 'permissions', []))),
             'modules' => array_values(Arr::wrap(Arr::get($accessContext, 'modules', []))),
             'capabilities' => array_values(Arr::wrap(Arr::get($accessContext, 'capabilities', []))),
+            'roles' => array_values(Arr::wrap(Arr::get($accessContext, 'roles', []))),
         ];
     }
 }

@@ -13,6 +13,7 @@ const mockPageProps = {
             permissions: ["dispatch.view", "customers.view", "billing.view"],
             modules: ["dispatch", "crm"],
             capabilities: ["billing"],
+            roles: ["owner"],
         },
     },
     frontendRuntime: {
@@ -42,6 +43,20 @@ const mockPageProps = {
                 previewBaseUrl: "https://smithplumbing.com/preview",
             },
         },
+    },
+    navigation: {
+        surface: "tenant-admin",
+        primary: [
+            {
+                id: "overview",
+                label: "Overview",
+                target: {
+                    kind: "internal",
+                    surface: "tenant-admin",
+                    path: "/dashboard",
+                },
+            },
+        ],
     },
 };
 

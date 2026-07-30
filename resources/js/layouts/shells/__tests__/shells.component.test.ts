@@ -54,6 +54,7 @@ beforeEach(() => {
                 ],
                 modules: ["dispatch", "crm"],
                 capabilities: ["billing"],
+                roles: ["owner"],
             },
         },
         frontendRuntime: {
@@ -65,6 +66,7 @@ beforeEach(() => {
             },
             tenant: null,
         },
+        navigation: null,
     };
 });
 
@@ -80,6 +82,43 @@ describe("surface shells", () => {
         expect(
             wrapper.get('nav[aria-label="Platform primary navigation"]'),
         ).toBeTruthy();
+    });
+
+    it("uses server-driven navigation payload for the active surface", () => {
+        mockPageProps.navigation = {
+            surface: "platform",
+            primary: [
+                {
+                    id: "home",
+                    label: "Home",
+                    target: {
+                        kind: "internal",
+                        surface: "platform-public",
+                        path: "/",
+                    },
+                },
+                {
+                    id: "portfolio",
+                    label: "Portfolio",
+                    target: {
+                        kind: "internal",
+                        surface: "platform-public",
+                        path: "/portfolio",
+                    },
+                },
+            ],
+        };
+
+        const wrapper = mount(PlatformPublicShell, {
+            props: {
+                pageTitle: "Platform",
+            },
+        });
+
+        expect(wrapper.text()).toContain("Portfolio");
+        expect(wrapper.find('a[href="https://webuildyouthrive.com/portfolio"]').exists()).toBe(
+            true,
+        );
     });
 
     it("renders tenant public shell with tenant navigation landmark", () => {
@@ -118,5 +157,67 @@ describe("surface shells", () => {
             wrapper.get('nav[aria-label="Tenant administration navigation"]'),
         ).toBeTruthy();
         expect(wrapper.text()).toContain("Signed in as Taylor Admin");
+    });
+
+    it("filters server-driven admin navigation by permission and role requirements", () => {
+        mockPageProps.frontendRuntime = {
+            ...mockPageProps.frontendRuntime,
+            surface: "tenant-admin",
+            tenant: createTenantContext(),
+        };
+        mockPageProps.navigation = {
+            surface: "tenant-admin",
+            primary: [
+                {
+                    id: "overview",
+                    label: "Overview",
+                    target: {
+                        kind: "internal",
+                        surface: "tenant-admin",
+                        path: "/dashboard",
+                    },
+                },
+                {
+                    id: "finance-approvals",
+                    label: "Finance Approvals",
+                    target: {
+                        kind: "internal",
+                        surface: "tenant-admin",
+                        path: "/finance/approvals",
+                    },
+                    access: {
+                        allPermissions: ["finance.approve"],
+                        anyRoles: ["finance-manager"],
+                    },
+                },
+            ],
+        };
+
+        const wrapperWithoutFinanceRole = mount(TenantAdminShell, {
+            props: {
+                pageTitle: "Admin",
+            },
+        });
+
+        expect(wrapperWithoutFinanceRole.text()).not.toContain("Finance Approvals");
+
+        mockPageProps.auth.access = {
+            ...(mockPageProps.auth.access ?? {
+                permissions: [],
+                modules: [],
+                capabilities: [],
+                roles: [],
+            }),
+            permissions: ["dispatch.view", "customers.view", "billing.view", "finance.approve"],
+            roles: ["finance-manager"],
+        };
+
+        const wrapperWithFinanceRole = mount(TenantAdminShell, {
+            props: {
+                pageTitle: "Admin",
+            },
+        });
+
+        expect(wrapperWithFinanceRole.text()).toContain("Finance Approvals");
     });
 });

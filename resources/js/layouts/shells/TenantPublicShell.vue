@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { NavigationMenu } from "@/core/navigation/components/NavigationMenu";
-import { useAccessContext } from "@/core/access/useAccessContext";
-import { resolveNavigation } from "@/core/navigation/navigationRegistry";
-import { getTenantPublicNavigationItems } from "@/core/navigation/registries/tenantPublicNavigation";
+import { usePrimaryNavigation } from "@/core/navigation/usePrimaryNavigation";
 import { useFrontendRuntime } from "@/core/runtime/useFrontendRuntime";
 import { resolveTenantThemeStyle } from "@/core/theme/themeRuntime";
 import { useUrlBuilder } from "@/core/url/urlBuilderPlugin";
@@ -14,8 +12,8 @@ const props = defineProps<{
 }>();
 
 const frontendRuntime = useFrontendRuntime();
-const accessContext = useAccessContext();
 const urlBuilder = useUrlBuilder();
+const navigationItems = usePrimaryNavigation();
 
 const tenantName = computed(
     () => frontendRuntime.value.tenant?.displayName ?? "Tenant Experience",
@@ -24,14 +22,6 @@ const tenantThemeStyle = computed(() =>
     resolveTenantThemeStyle(frontendRuntime.value.tenant?.theme),
 );
 const homeUrl = computed(() => urlBuilder.tenantPublic("/"));
-
-const navigationItems = computed(() =>
-    resolveNavigation(
-        getTenantPublicNavigationItems(),
-        accessContext.value,
-        urlBuilder,
-    ),
-);
 </script>
 
 <template>

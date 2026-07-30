@@ -8,6 +8,7 @@ describe("canAccess", () => {
             permissions: ["customers.view", "orders.manage"],
             modules: ["crm", "orders"],
             capabilities: ["appointments"],
+            roles: ["owner"],
         });
 
         expect(
@@ -18,6 +19,7 @@ describe("canAccess", () => {
                     anyPermissions: ["orders.manage", "orders.read"],
                     allModules: ["crm"],
                     anyCapabilities: ["appointments", "dispatch"],
+                    anyRoles: ["owner", "manager"],
                 },
                 context,
             ),
@@ -30,12 +32,14 @@ describe("canAccess", () => {
             permissions: ["customers.view"],
             modules: ["crm"],
             capabilities: [],
+            roles: ["technician"],
         });
 
         expect(
             canAccess(
                 {
                     allPermissions: ["customers.view", "orders.manage"],
+                    anyRoles: ["owner", "finance-manager"],
                 },
                 context,
             ),

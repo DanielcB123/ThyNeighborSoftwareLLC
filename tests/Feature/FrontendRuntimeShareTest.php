@@ -19,6 +19,8 @@ class FrontendRuntimeShareTest extends TestCase
                 ->where('frontendRuntime.platformUrls.authBaseUrl', config('frontend.platform.auth_url'))
                 ->where('frontendRuntime.platformUrls.adminBaseUrl', config('frontend.platform.admin_url'))
                 ->where('frontendRuntime.tenant', null)
+                ->where('navigation.surface', 'platform')
+                ->has('navigation.primary', 4)
             );
     }
 }

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { NavigationMenu } from "@/core/navigation/components/NavigationMenu";
-import { useAccessContext } from "@/core/access/useAccessContext";
-import { resolveNavigation } from "@/core/navigation/navigationRegistry";
-import { getPlatformPublicNavigationItems } from "@/core/navigation/registries/platformPublicNavigation";
+import { usePrimaryNavigation } from "@/core/navigation/usePrimaryNavigation";
 import { useUrlBuilder } from "@/core/url/urlBuilderPlugin";
 
 const props = defineProps<{
@@ -11,18 +9,10 @@ const props = defineProps<{
     pageSummary?: string;
 }>();
 
-const accessContext = useAccessContext();
 const urlBuilder = useUrlBuilder();
+const navigationItems = usePrimaryNavigation();
 
 const homeUrl = computed(() => urlBuilder.platformPublic("/"));
-
-const navigationItems = computed(() =>
-    resolveNavigation(
-        getPlatformPublicNavigationItems(),
-        accessContext.value,
-        urlBuilder,
-    ),
-);
 </script>
 
 <template>

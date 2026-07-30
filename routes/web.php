@@ -222,6 +222,61 @@ Route::get('/tenant-site', function () use ($demoTenantFrontendContext) {
         'frontendTenantContext',
         $demoTenantFrontendContext('tenant-public')
     );
+    request()->attributes->set('frontendNavigationConfig', [
+        'tenant-public' => [
+            [
+                'id' => 'home',
+                'label' => 'Home',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-public',
+                    'path' => '/',
+                ],
+            ],
+            [
+                'id' => 'services',
+                'label' => 'Services',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-public',
+                    'path' => '/services',
+                ],
+            ],
+            [
+                'id' => 'maintenance-plan',
+                'label' => 'Maintenance Plans',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-public',
+                    'path' => '/maintenance-plan',
+                ],
+                'access' => [
+                    'anyModules' => ['crm'],
+                ],
+            ],
+            [
+                'id' => 'financing',
+                'label' => 'Financing',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-public',
+                    'path' => '/financing',
+                ],
+                'access' => [
+                    'anyCapabilities' => ['financing'],
+                ],
+            ],
+            [
+                'id' => 'customer-portal',
+                'label' => 'Customer Portal',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-auth',
+                    'path' => '/login',
+                ],
+            ],
+        ],
+    ]);
 
     return Inertia::render('Tenant/PublicHome', [
         'blocks' => [
@@ -306,6 +361,78 @@ Route::get('/dashboard', function () use ($demoTenantFrontendContext) {
         'permissions' => ['dispatch.view', 'customers.view', 'billing.view'],
         'modules' => ['dispatch', 'crm'],
         'capabilities' => ['billing'],
+        'roles' => ['owner'],
+    ]);
+    request()->attributes->set('frontendNavigationConfig', [
+        'tenant-admin' => [
+            [
+                'id' => 'overview',
+                'label' => 'Overview',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-admin',
+                    'path' => '/dashboard',
+                ],
+                'access' => [
+                    'requiresAuthentication' => true,
+                ],
+            ],
+            [
+                'id' => 'customers',
+                'label' => 'Customers',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-admin',
+                    'path' => '/customers',
+                ],
+                'access' => [
+                    'requiresAuthentication' => true,
+                    'allPermissions' => ['customers.view'],
+                ],
+            ],
+            [
+                'id' => 'dispatch',
+                'label' => 'Dispatch',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-admin',
+                    'path' => '/dispatch',
+                ],
+                'access' => [
+                    'requiresAuthentication' => true,
+                    'allPermissions' => ['dispatch.view'],
+                    'allModules' => ['dispatch'],
+                ],
+            ],
+            [
+                'id' => 'billing',
+                'label' => 'Billing',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-admin',
+                    'path' => '/billing',
+                ],
+                'access' => [
+                    'requiresAuthentication' => true,
+                    'allPermissions' => ['billing.view'],
+                    'allCapabilities' => ['billing'],
+                    'anyRoles' => ['owner', 'finance-manager'],
+                ],
+            ],
+            [
+                'id' => 'security-center',
+                'label' => 'Security Center',
+                'target' => [
+                    'kind' => 'internal',
+                    'surface' => 'tenant-admin',
+                    'path' => '/security',
+                ],
+                'access' => [
+                    'requiresAuthentication' => true,
+                    'allGates' => ['tenant.security.view'],
+                ],
+            ],
+        ],
     ]);
 
     return Inertia::render('Tenant/AdminDashboard', [

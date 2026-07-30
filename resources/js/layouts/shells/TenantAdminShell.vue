@@ -2,9 +2,7 @@
 import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { NavigationMenu } from "@/core/navigation/components/NavigationMenu";
-import { useAccessContext } from "@/core/access/useAccessContext";
-import { resolveNavigation } from "@/core/navigation/navigationRegistry";
-import { getTenantAdminNavigationItems } from "@/core/navigation/registries/tenantAdminNavigation";
+import { usePrimaryNavigation } from "@/core/navigation/usePrimaryNavigation";
 import { useFrontendRuntime } from "@/core/runtime/useFrontendRuntime";
 import type { InertiaSharedProps } from "@/core/runtime/frontendContext";
 import { resolveTenantThemeStyle } from "@/core/theme/themeRuntime";
@@ -17,8 +15,8 @@ const props = defineProps<{
 
 const page = usePage<InertiaSharedProps>();
 const frontendRuntime = useFrontendRuntime();
-const accessContext = useAccessContext();
 const urlBuilder = useUrlBuilder();
+const navigationItems = usePrimaryNavigation();
 
 const tenantName = computed(
     () => frontendRuntime.value.tenant?.displayName ?? "Tenant Administration",
@@ -27,14 +25,6 @@ const tenantThemeStyle = computed(() =>
     resolveTenantThemeStyle(frontendRuntime.value.tenant?.theme),
 );
 const dashboardUrl = computed(() => urlBuilder.tenantAdmin("/dashboard"));
-
-const navigationItems = computed(() =>
-    resolveNavigation(
-        getTenantAdminNavigationItems(),
-        accessContext.value,
-        urlBuilder,
-    ),
-);
 
 const signedInUserName = computed(
     () => page.props.auth.user?.name ?? "Administrator",

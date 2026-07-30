@@ -20,6 +20,7 @@ export function useAccessContext() {
                 page.props.auth.access?.capabilities ??
                 frontendRuntime.value.tenant?.enabledCapabilities ??
                 [],
+            roles: page.props.auth.access?.roles ?? [],
         }),
     );
 }

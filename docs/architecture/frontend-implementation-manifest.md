@@ -25,6 +25,13 @@ This manifest tracks phased frontend delivery for WEB-12 in a repository that st
 5. Shell selection is surface-driven through a typed resolver (`resolveShellBySurface`), not page-level string checks.
 6. Content pages use a typed block registry with schema-version validation and safe unknown block fallback behavior.
 
+## Server-driven navigation contract status
+
+1. Navigation is now shared from backend middleware via a dedicated builder (`ServerDrivenNavigationBuilder`) instead of being frontend-only.
+2. Server-side filtering supports authentication checks, permissions, modules, capabilities, roles, and Laravel gates.
+3. Frontend navigation consumption now runs through adapter/composable layers (`adaptServerNavigationContract`, `usePrimaryNavigation`) that accept backend payloads and preserve typed URL resolution.
+4. Static TS registries remain as fallbacks when backend navigation payloads are unavailable or invalid.
+
 ## Remaining risks
 
 1. Backend tenant resolution middleware is not yet implemented in this repository; tenant route context is currently simulated in route closures for frontend integration.

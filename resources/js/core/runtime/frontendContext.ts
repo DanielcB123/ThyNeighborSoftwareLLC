@@ -52,6 +52,12 @@ export interface AuthAccessContext {
     permissions: readonly string[];
     modules: readonly string[];
     capabilities: readonly string[];
+    roles: readonly string[];
+}
+
+export interface FrontendNavigationContract {
+    surface: RuntimeSurface;
+    primary: readonly unknown[];
 }
 
 export interface InertiaSharedProps {
@@ -61,4 +67,5 @@ export interface InertiaSharedProps {
         access?: AuthAccessContext | null;
     };
     frontendRuntime: FrontendRuntimeContext;
+    navigation?: FrontendNavigationContract | null;
 }

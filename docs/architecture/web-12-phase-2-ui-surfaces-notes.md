@@ -25,14 +25,17 @@ This document records the phase-2 delivery slice focused on straight frontend fi
 
 ### 3) Route surfaces + navigation integration
 
-- Added typed navigation registries:
+- Added typed fallback navigation registries:
     - `platformPublicNavigation.ts`
     - `tenantPublicNavigation.ts`
     - `tenantAdminNavigation.ts`
-- Shells now consume:
-    - `resolveNavigation(...)`
-    - `useUrlBuilder()`
-    - `useAccessContext()`
+- Added server-driven navigation contract delivery:
+    - `app/Support/Frontend/Navigation/ServerDrivenNavigationBuilder.php`
+    - shared through `HandleInertiaRequests`
+- Added frontend adapter/composable consumption path:
+    - `resources/js/core/navigation/serverNavigationAdapter.ts`
+    - `resources/js/core/navigation/usePrimaryNavigation.ts`
+- Shells now consume backend navigation payloads first, with typed fallback registries when backend payloads are absent or invalid.
 - Added route-driven Inertia pages for platform, tenant public, and tenant admin surfaces.
 
 ### 4) Theme/token runtime
@@ -70,6 +73,8 @@ This document records the phase-2 delivery slice focused on straight frontend fi
 - Added tests for:
     - URL path-prefix behavior
     - shell surface resolution
+    - server navigation adapter normalization
+    - server-driven shell navigation rendering + role/permission filtering
     - block registry safety behavior
     - dashboard widget access filtering and state behavior
     - shell landmarks (component tests)
