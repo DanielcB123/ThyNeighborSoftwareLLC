@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Demo\Enums\DemoDatasetVersion;
+
 return [
     'enabled' => env('DEMO_SEEDING_ENABLED', false),
 
@@ -15,7 +17,7 @@ return [
         now()->startOfMonth()->toDateString()
     ),
 
-    'dataset_version' => '1.0.0',
+    'dataset_version' => DemoDatasetVersion::CURRENT,
 
     'profile' => env('DEMO_DATA_PROFILE', 'standard'),
 

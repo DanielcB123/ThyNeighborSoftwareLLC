@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Demo\Services;
 
+use App\Demo\Data\DemoTenantScenarioData;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 final class DemoTenantRegistry
 {
     /**
-     * @return Collection<int, array<string, mixed>>
+     * @return Collection<int, DemoTenantScenarioData>
      */
     public function all(): Collection
     {
@@ -22,7 +23,7 @@ final class DemoTenantRegistry
     }
 
     /**
-     * @return Collection<int, array<string, mixed>>
+     * @return Collection<int, DemoTenantScenarioData>
      */
     public function resolveSelection(string $tenantOption): Collection
     {
@@ -46,20 +47,20 @@ final class DemoTenantRegistry
         }
 
         return $this->all()
-            ->filter(static fn (array $tenant): bool => (string) $tenant['key'] === $tenantByOption[$normalized])
+            ->filter(static fn (DemoTenantScenarioData $tenant): bool => $tenant->key === $tenantByOption[$normalized])
             ->values();
     }
 
     /**
-     * @return array<string, mixed>
+     * @return DemoTenantScenarioData
      */
-    private function loadScenarioFile(string $fileName): array
+    private function loadScenarioFile(string $fileName): DemoTenantScenarioData
     {
         $path = database_path('demo/'.$fileName);
 
-        /** @var array<string, mixed> $scenario */
-        $scenario = require $path;
+        /** @var array<string, mixed> $scenarioPayload */
+        $scenarioPayload = require $path;
 
-        return $scenario;
+        return DemoTenantScenarioData::fromArray($scenarioPayload);
     }
 }

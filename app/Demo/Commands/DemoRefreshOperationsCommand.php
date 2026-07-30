@@ -66,10 +66,14 @@ final class DemoRefreshOperationsCommand extends BaseDemoCommand
         $this->table(
             ['Field', 'Value'],
             [
+                ['dataset_version', (string) $summary['dataset_version']],
                 ['profile', (string) $summary['profile']],
                 ['reference_date', (string) $summary['reference_date']],
                 ['tenant_option', (string) $summary['tenant_option']],
                 ['refreshed', ((bool) $summary['refreshed']) ? 'yes' : 'no'],
+                ['seeded_tenants', (string) $summary['seeded_tenants']],
+                ['seeded_users', (string) $summary['seeded_users']],
+                ['tenant_databases', implode(', ', $summary['tenant_databases']) ?: 'none'],
             ]
         );
 

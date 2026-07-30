@@ -5,89 +5,126 @@ declare(strict_types=1);
 namespace App\Demo\Services;
 
 use App\Demo\Data\DemoConfigurationData;
+use App\Demo\Data\DemoTenantScenarioData;
+use App\Demo\Data\DemoTenantSeedContextData;
 use App\Demo\Enums\DemoDataProfile;
 use App\Demo\Exceptions\DemoSeedingNotAllowedException;
 use App\Demo\Support\DemoRandomizer;
+use App\Demo\Support\TenantDatabaseName;
 use App\Models\Central\CentralSetting;
 use App\Models\Central\DatabaseCluster;
 use App\Models\Central\Tenant;
 use App\Models\Central\TenantDatabase;
 use App\Models\Central\TenantDomain;
-use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 final class DemoTenantProvisioner
 {
+    public function __construct(
+        private readonly DemoCentralCatalogSeeder $centralCatalogSeeder,
+        private readonly DemoTenantDatabaseManager $tenantDatabaseManager,
+        private readonly DemoTenantSchemaManager $tenantSchemaManager,
+        private readonly DemoTenantSeederRunner $tenantSeederRunner,
+    ) {
+    }
+
     /**
-     * @param  Collection<int, array<string, mixed>>  $tenants
-     * @return array{seeded_tenants:int,seeded_users:int}
+     * @param  Collection<int, DemoTenantScenarioData>  $tenants
+     * @param  array<string, bool>  $skipFlags
+     * @return array{
+     *   seeded_tenants:int,
+     *   seeded_users:int,
+     *   tenant_database_names:list<string>
+     * }
      */
     public function provision(
         Collection $tenants,
         DemoDataProfile $profile,
         CarbonImmutable $referenceDate,
         bool $seedPlatformUsers,
+        array $skipFlags = [],
+        bool $preserveIdentity = false,
     ): array {
         $configuration = DemoConfigurationData::fromConfig();
+        $effectiveSeedPlatformUsers = $seedPlatformUsers && ! ($skipFlags['skip-platform'] ?? false);
 
-        DB::connection('central')->transaction(function () use ($tenants, $profile, $referenceDate, $configuration, $seedPlatformUsers): void {
-            foreach ($tenants as $tenantScenario) {
-                $this->provisionTenant($tenantScenario, $profile, $configuration);
-            }
+        $this->centralCatalogSeeder->seed(seedPlatformUsers: $effectiveSeedPlatformUsers);
+        $targetAllocations = $this->allocateTargets($profile, $tenants);
+        $tenantDatabaseNames = [];
+        $seededUsers = 0;
 
-            if ($seedPlatformUsers) {
-                $this->seedPlatformUsers($configuration);
-            }
+        foreach ($tenants as $tenantScenario) {
+            $result = $this->provisionTenant(
+                tenantScenario: $tenantScenario,
+                profile: $profile,
+                configuration: $configuration,
+                referenceDate: $referenceDate,
+                targets: $targetAllocations[$tenantScenario->key] ?? $this->fallbackTargets($profile),
+                skipFlags: $skipFlags,
+                preserveIdentity: $preserveIdentity,
+            );
 
-            $this->recordDatasetSettings($profile, $referenceDate, $configuration);
-        });
+            $tenantDatabaseNames[] = $result['database_name'];
+            $seededUsers += $result['seeded_users'];
+        }
+
+        $this->recordDatasetSettings($profile, $referenceDate, $configuration);
 
         return [
             'seeded_tenants' => $tenants->count(),
-            'seeded_users' => User::query()->count(),
+            'seeded_users' => $seededUsers,
+            'tenant_database_names' => $tenantDatabaseNames,
         ];
     }
 
     /**
-     * @param  array<string, mixed>  $tenantScenario
+     * @param  array{
+     *   locations:int,
+     *   customers:int,
+     *   leads:int,
+     *   invoices:int,
+     *   payments:int,
+     *   expenses:int,
+     *   kpi_days:int,
+     *   users:int
+     * }  $targets
+     * @param  array<string, bool>  $skipFlags
+     * @return array{database_name:string,seeded_users:int}
      */
     private function provisionTenant(
-        array $tenantScenario,
+        DemoTenantScenarioData $tenantScenario,
         DemoDataProfile $profile,
         DemoConfigurationData $configuration,
-    ): void {
-        $slug = (string) ($tenantScenario['slug'] ?? '');
-        $domain = strtolower((string) ($tenantScenario['domain'] ?? ''));
-        $databaseName = strtolower((string) ($tenantScenario['database_name'] ?? sprintf('wbyt_local_%s', $slug)));
-        $publicId = (string) ($tenantScenario['public_id'] ?? '');
-
-        if ($slug === '' || $domain === '') {
-            throw new DemoSeedingNotAllowedException('Tenant scenario is missing a slug or domain.');
-        }
-
-        $tenant = Tenant::query()->where('slug', $slug)->first();
+        CarbonImmutable $referenceDate,
+        array $targets,
+        array $skipFlags,
+        bool $preserveIdentity,
+    ): array {
+        $tenant = Tenant::query()->where('slug', $tenantScenario->slug)->first();
 
         if ($tenant !== null && ! $tenant->is_demo) {
             throw new DemoSeedingNotAllowedException(sprintf(
-                'Tenant "%s" is a real tenant and cannot be converted to demo.',
-                $slug
+                'Tenant "%s" is a real tenant and cannot be modified by demo commands.',
+                $tenantScenario->slug
             ));
         }
 
         if ($tenant === null) {
             $tenant = new Tenant();
-            $tenant->slug = $slug;
+            $tenant->slug = $tenantScenario->slug;
         }
 
-        $tenant->display_name = (string) ($tenantScenario['display_name'] ?? $slug);
+        $this->assertDomainNotOwnedByRealTenant($tenantScenario->domain, $tenant);
+
+        $tenant->display_name = $tenantScenario->displayName;
         $tenant->status = 'active';
-        $tenant->locale = (string) ($tenantScenario['locale'] ?? 'en');
-        $tenant->timezone = (string) ($tenantScenario['timezone'] ?? 'UTC');
+        $tenant->locale = $tenantScenario->locale;
+        $tenant->timezone = $tenantScenario->timezone;
         $tenant->enabled_modules = ['crm', 'finance', 'content', 'analytics'];
-        $tenant->enabled_capabilities = ['support-access', 'reporting'];
+        $tenant->enabled_capabilities = ['support-access', 'reporting', 'role-management', 'multi-location'];
         $tenant->provisioning_state = 'ready';
         $tenant->migration_state = 'current';
         $tenant->health_state = 'healthy';
@@ -96,13 +133,15 @@ final class DemoTenantProvisioner
         $tenant->demo_seeded_at = now()->utc();
         $tenant->save();
 
-        if ($publicId !== '' && $tenant->public_id !== $publicId) {
-            $tenant->public_id = $publicId;
+        if ($tenant->public_id !== $tenantScenario->publicId) {
+            $tenant->public_id = $tenantScenario->publicId;
             $tenant->save();
         }
 
+        $validatedDatabaseName = TenantDatabaseName::from($tenantScenario->databaseName)->value;
+
         TenantDomain::query()->updateOrCreate(
-            ['domain' => $domain],
+            ['domain' => $tenantScenario->domain],
             [
                 'tenant_id' => $tenant->id,
                 'is_primary' => true,
@@ -125,9 +164,9 @@ final class DemoTenantProvisioner
             ['tenant_id' => $tenant->id, 'is_current' => true],
             [
                 'database_cluster_id' => $cluster->id,
-                'database_name' => $databaseName,
+                'database_name' => $validatedDatabaseName,
                 'status' => 'active',
-                'secret_reference' => sprintf('demo://tenant/%s/db', $slug),
+                'secret_reference' => sprintf('demo://tenant/%s/db', $tenantScenario->slug),
                 'schema_version' => 'demo-'.$configuration->datasetVersion,
                 'provisioning_state' => 'ready',
                 'migration_state' => 'current',
@@ -135,72 +174,60 @@ final class DemoTenantProvisioner
             ]
         );
 
-        $users = is_array($tenantScenario['users'] ?? null) ? $tenantScenario['users'] : [];
+        $tenantDatabase = TenantDatabase::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_current', true)
+            ->with('cluster')
+            ->first();
 
-        foreach ($users as $userScenario) {
-            $email = strtolower((string) ($userScenario['email'] ?? ''));
-
-            if ($email === '') {
-                continue;
-            }
-
-            User::query()->updateOrCreate(
-                ['email' => $email],
-                [
-                    'name' => (string) ($userScenario['name'] ?? $email),
-                    'password' => Hash::make($configuration->password),
-                    'email_verified_at' => now()->utc(),
-                ]
-            );
+        if ($tenantDatabase === null || $tenantDatabase->cluster === null) {
+            throw new RuntimeException(sprintf(
+                'Current tenant database is unavailable for tenant "%s".',
+                $tenantScenario->slug
+            ));
         }
 
-        $this->seedSyntheticUsersForTenant($tenant, $profile, $configuration);
-    }
+        $connectionName = $this->tenantDatabaseManager->ensureDatabase(
+            databaseName: $validatedDatabaseName,
+            secretReference: (string) $tenantDatabase->secret_reference,
+            cluster: $tenantDatabase->cluster,
+        );
 
-    private function seedPlatformUsers(DemoConfigurationData $configuration): void
-    {
-        foreach ([
-            ['name' => 'Platform Owner', 'email' => 'platform.owner@webuildyouthrive.test'],
-            ['name' => 'Platform Support', 'email' => 'platform.support@webuildyouthrive.test'],
-            ['name' => 'Platform Billing', 'email' => 'platform.billing@webuildyouthrive.test'],
-        ] as $user) {
-            User::query()->updateOrCreate(
-                ['email' => $user['email']],
-                [
-                    'name' => $user['name'],
-                    'password' => Hash::make($configuration->password),
-                    'email_verified_at' => now()->utc(),
-                ]
-            );
-        }
-    }
+        $this->tenantSchemaManager->ensureSchema($connectionName);
+        $this->tenantSchemaManager->resetData(
+            connectionName: $connectionName,
+            preserveIdentity: $preserveIdentity
+        );
 
-    private function seedSyntheticUsersForTenant(
-        Tenant $tenant,
-        DemoDataProfile $profile,
-        DemoConfigurationData $configuration,
-    ): void {
-        $targetUsersPerTenant = (int) ceil($profile->targets()['users'] / 3);
-        $randomizer = new DemoRandomizer($configuration->datasetVersion, $tenant->public_id, $profile);
+        $context = new DemoTenantSeedContextData(
+            connectionName: $connectionName,
+            tenantPublicId: $tenantScenario->publicId,
+            tenantSlug: $tenantScenario->slug,
+            tenantDisplayName: $tenantScenario->displayName,
+            tenantDomain: $tenantScenario->domain,
+            datasetVersion: $configuration->datasetVersion,
+            profile: $profile,
+            referenceDate: $referenceDate,
+            scenario: $tenantScenario,
+            targets: $targets,
+            skipFlags: array_merge($skipFlags, ['preserve-identity' => $preserveIdentity]),
+            randomizer: new DemoRandomizer(
+                $configuration->datasetVersion,
+                $tenantScenario->publicId,
+                $profile
+            ),
+            password: $configuration->password,
+        );
 
-        for ($index = 1; $index <= $targetUsersPerTenant; $index++) {
-            $suffix = str_pad((string) $index, 3, '0', STR_PAD_LEFT);
-            $localPart = sprintf('%s.user%s', $tenant->slug, $suffix);
-            $domain = 'demo.webuildyouthrive.test';
-            $email = strtolower(sprintf('%s@%s', $localPart, $domain));
+        $this->tenantSeederRunner->run($context);
 
-            User::query()->updateOrCreate(
-                ['email' => $email],
-                [
-                    'name' => sprintf('%s Demo User %d', $tenant->display_name, $index),
-                    'password' => Hash::make($configuration->password),
-                    'email_verified_at' => now()->utc(),
-                ]
-            );
+        $seededUsers = (int) DB::connection($connectionName)->table('tenant_users')->count();
+        $this->tenantDatabaseManager->purgeTenantConnection($validatedDatabaseName);
 
-            // Deterministic touch point; keeps user generation reproducible by seed.
-            $randomizer->bool(50);
-        }
+        return [
+            'database_name' => $validatedDatabaseName,
+            'seeded_users' => $seededUsers,
+        ];
     }
 
     private function recordDatasetSettings(
@@ -223,5 +250,135 @@ final class DemoTenantProvisioner
                 ['value' => $value]
             );
         }
+    }
+
+    private function assertDomainNotOwnedByRealTenant(string $domain, Tenant $candidateTenant): void
+    {
+        $existing = TenantDomain::query()
+            ->where('domain', $domain)
+            ->with('tenant')
+            ->first();
+
+        if ($existing === null || $existing->tenant === null) {
+            return;
+        }
+
+        if ($existing->tenant_id === $candidateTenant->id) {
+            return;
+        }
+
+        $tenantType = $existing->tenant->is_demo ? 'another demo tenant' : 'a real tenant';
+
+        throw new DemoSeedingNotAllowedException(sprintf(
+            'Domain "%s" is already assigned to %s (%s).',
+            $domain,
+            $tenantType,
+            $existing->tenant->slug
+        ));
+    }
+
+    /**
+     * @param  Collection<int, DemoTenantScenarioData>  $tenants
+     * @return array<string, array{
+     *   locations:int,
+     *   customers:int,
+     *   leads:int,
+     *   invoices:int,
+     *   payments:int,
+     *   expenses:int,
+     *   kpi_days:int,
+     *   users:int
+     * }>
+     */
+    private function allocateTargets(DemoDataProfile $profile, Collection $tenants): array
+    {
+        $profileTargets = $profile->targets();
+        $weights = $tenants
+            ->mapWithKeys(static fn (DemoTenantScenarioData $scenario): array => [$scenario->key => $scenario->weight])
+            ->all();
+
+        $totalWeight = array_sum($weights);
+        if ($totalWeight <= 0) {
+            $totalWeight = count($weights);
+        }
+
+        $metrics = ['users', 'locations', 'customers', 'leads', 'invoices', 'payments', 'expenses'];
+        $allocations = [];
+        foreach ($weights as $key => $weight) {
+            $allocations[$key] = [
+                'users' => 0,
+                'locations' => 0,
+                'customers' => 0,
+                'leads' => 0,
+                'invoices' => 0,
+                'payments' => 0,
+                'expenses' => 0,
+                'kpi_days' => $profileTargets['kpi_days'],
+            ];
+        }
+
+        foreach ($metrics as $metric) {
+            $totalTarget = (int) ($profileTargets[$metric] ?? 0);
+            $assigned = 0;
+            $remainders = [];
+
+            foreach ($weights as $key => $weight) {
+                $raw = ($totalTarget * $weight) / $totalWeight;
+                $base = (int) floor($raw);
+                $allocations[$key][$metric] = $base;
+                $assigned += $base;
+                $remainders[$key] = $raw - $base;
+            }
+
+            $remaining = $totalTarget - $assigned;
+            while ($remaining > 0) {
+                arsort($remainders);
+                foreach (array_keys($remainders) as $key) {
+                    if ($remaining <= 0) {
+                        break;
+                    }
+
+                    $allocations[$key][$metric]++;
+                    $remaining--;
+                }
+            }
+        }
+
+        foreach ($tenants as $scenario) {
+            $allocations[$scenario->key]['users'] = max(
+                count($scenario->users),
+                $allocations[$scenario->key]['users']
+            );
+        }
+
+        return $allocations;
+    }
+
+    /**
+     * @return array{
+     *   locations:int,
+     *   customers:int,
+     *   leads:int,
+     *   invoices:int,
+     *   payments:int,
+     *   expenses:int,
+     *   kpi_days:int,
+     *   users:int
+     * }
+     */
+    private function fallbackTargets(DemoDataProfile $profile): array
+    {
+        $targets = $profile->targets();
+
+        return [
+            'locations' => max(1, (int) ceil($targets['locations'] / 3)),
+            'customers' => max(1, (int) ceil($targets['customers'] / 3)),
+            'leads' => max(1, (int) ceil($targets['leads'] / 3)),
+            'invoices' => max(1, (int) ceil($targets['invoices'] / 3)),
+            'payments' => max(0, (int) ceil($targets['payments'] / 3)),
+            'expenses' => max(1, (int) ceil($targets['expenses'] / 3)),
+            'kpi_days' => max(1, (int) $targets['kpi_days']),
+            'users' => max(1, (int) ceil($targets['users'] / 3)),
+        ];
     }
 }

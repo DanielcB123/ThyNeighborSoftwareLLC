@@ -24,10 +24,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlatformPermissionSeeder::class,
             PlatformRoleSeeder::class,
-            PlatformUserSeeder::class,
-            PlanSeeder::class,
             FeatureSeeder::class,
             ModuleSeeder::class,
+            PlanSeeder::class,
+            PlatformUserSeeder::class,
             DemoTenantRegistrySeeder::class,
         ]);
     }

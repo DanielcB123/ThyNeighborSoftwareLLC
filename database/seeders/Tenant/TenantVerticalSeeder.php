@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Seeders\Tenant;
 
+use App\Demo\Services\DemoTenantDataSeeder;
+use App\Demo\Support\InteractsWithDemoTenantSeedContext;
 use Illuminate\Database\Seeder;
 
 final class TenantVerticalSeeder extends Seeder
 {
+    use InteractsWithDemoTenantSeedContext;
+
     public function run(): void
     {
-        // Placeholder for tenant vertical-specific seeding.
+        app(DemoTenantDataSeeder::class)->seedVertical($this->demoSeedContext());
     }
 }

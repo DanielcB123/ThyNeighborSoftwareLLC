@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Demo\Services;
 
+use App\Demo\Data\DemoConfigurationData;
 use App\Demo\Enums\DemoDataProfile;
 use App\Demo\Exceptions\DemoSeedingNotAllowedException;
 use App\Demo\Support\DemoReferenceClock;
 use App\Demo\Support\TenantDatabaseName;
+use App\Models\Central\DemoAuditEvent;
 use App\Models\Central\CentralSetting;
 use App\Models\Central\Tenant;
 use Illuminate\Support\Facades\Cache;
@@ -21,6 +23,7 @@ final class DemoDatasetManager
         private readonly DemoTenantRegistry $tenantRegistry,
         private readonly DemoTenantProvisioner $tenantProvisioner,
         private readonly DemoReferenceClock $referenceClock,
+        private readonly DemoTenantDatabaseManager $tenantDatabaseManager,
     ) {
     }
 
@@ -54,21 +57,33 @@ final class DemoDatasetManager
             profile: $profile,
             referenceDate: $effectiveReferenceDate,
             seedPlatformUsers: $seedPlatform,
+            skipFlags: $skipFlags,
+            preserveIdentity: false,
         );
 
         $this->writeImplementationStatus(
             profile: $profile,
             referenceDate: $effectiveReferenceDate->toDateString(),
             tenantOption: $tenantOption,
-            skipFlags: $skipFlags
+            skipFlags: $skipFlags,
+            tenantDatabases: $summary['tenant_database_names']
         );
 
+        $this->recordAuditEvent('demo.seed', $tenantOption, [
+            'profile' => $profile->value,
+            'reference_date' => $effectiveReferenceDate->toDateString(),
+            'tenant_databases' => $summary['tenant_database_names'],
+            'skip_flags' => array_keys(array_filter($skipFlags, static fn (bool $value): bool => $value)),
+        ]);
+
         return [
+            'dataset_version' => DemoConfigurationData::fromConfig()->datasetVersion,
             'profile' => $profile->value,
             'reference_date' => $effectiveReferenceDate->toDateString(),
             'tenant_option' => $tenantOption,
             'seeded_tenants' => $summary['seeded_tenants'],
             'seeded_users' => $summary['seeded_users'],
+            'tenant_databases' => $summary['tenant_database_names'],
             'skip_flags' => array_keys(array_filter($skipFlags, static fn (bool $value): bool => $value)),
         ];
     }
@@ -85,8 +100,7 @@ final class DemoDatasetManager
         $droppedDatabases = 0;
 
         foreach ($selected as $tenantScenario) {
-            $slug = (string) ($tenantScenario['slug'] ?? '');
-            $tenant = Tenant::query()->where('slug', $slug)->first();
+            $tenant = Tenant::query()->where('slug', $tenantScenario->slug)->first();
 
             if ($tenant === null) {
                 continue;
@@ -95,7 +109,7 @@ final class DemoDatasetManager
             if (! $tenant->is_demo) {
                 throw new DemoSeedingNotAllowedException(sprintf(
                     'Refusing to reset real tenant "%s".',
-                    $slug
+                    $tenantScenario->slug
                 ));
             }
 
@@ -104,16 +118,25 @@ final class DemoDatasetManager
                 $databaseName = TenantDatabaseName::from((string) $tenantDatabase->database_name)->value;
 
                 if (! $keepDatabases) {
-                    DB::connection('central')->statement(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+                    $tenantDatabase->loadMissing('cluster');
+                    if ($tenantDatabase->cluster !== null) {
+                        $this->tenantDatabaseManager->dropDatabase(
+                            databaseName: $databaseName,
+                            secretReference: (string) $tenantDatabase->secret_reference,
+                            cluster: $tenantDatabase->cluster
+                        );
+                    }
                     $droppedDatabases++;
                 }
+
+                $this->tenantDatabaseManager->purgeTenantConnection($databaseName);
             }
 
             foreach ($tenant->domains as $domain) {
                 $this->forgetResolutionCacheForDomain((string) $domain->domain);
             }
 
-            $tenant->delete();
+            $tenant->forceDelete();
             $deletedTenants++;
         }
 
@@ -145,58 +168,79 @@ final class DemoDatasetManager
         $selected = $this->tenantRegistry->resolveSelection($tenantOption);
 
         foreach ($selected as $tenantScenario) {
-            $slug = (string) ($tenantScenario['slug'] ?? '');
-            $tenant = Tenant::query()->where('slug', $slug)->first();
+            $tenant = Tenant::query()->where('slug', $tenantScenario->slug)->first();
 
             if ($tenant === null || ! $tenant->is_demo) {
                 throw new DemoSeedingNotAllowedException(sprintf(
                     'Refresh operations can run only for existing demo tenants. Failed at "%s".',
-                    $slug
+                    $tenantScenario->slug
                 ));
             }
         }
 
-        $summary = $this->seed(
-            tenantOption: $tenantOption,
-            referenceDate: $resolvedDate->toDateString(),
-            profileOverride: $profile,
-            seedPlatform: false,
+        $summary = $this->tenantProvisioner->provision(
+            tenants: $selected,
+            profile: $profile,
+            referenceDate: $resolvedDate,
+            seedPlatformUsers: false,
             skipFlags: [
                 'skip-platform' => true,
             ],
-            explicitCommand: true,
+            preserveIdentity: true
         );
 
+        $this->writeImplementationStatus(
+            profile: $profile,
+            referenceDate: $resolvedDate->toDateString(),
+            tenantOption: $tenantOption,
+            skipFlags: ['skip-platform' => true],
+            tenantDatabases: $summary['tenant_database_names']
+        );
+
+        $this->recordAuditEvent('demo.refresh-operations', $tenantOption, [
+            'profile' => $profile->value,
+            'reference_date' => $resolvedDate->toDateString(),
+            'tenant_databases' => $summary['tenant_database_names'],
+        ]);
+
         return [
+            'dataset_version' => DemoConfigurationData::fromConfig()->datasetVersion,
             'profile' => $profile->value,
             'reference_date' => $resolvedDate->toDateString(),
             'tenant_option' => $tenantOption,
             'refreshed' => true,
-            'seed_summary' => $summary,
+            'seeded_tenants' => $summary['seeded_tenants'],
+            'seeded_users' => $summary['seeded_users'],
+            'tenant_databases' => $summary['tenant_database_names'],
         ];
     }
 
     /**
      * @param  array<string, bool>  $skipFlags
+     * @param  list<string>  $tenantDatabases
      */
     private function writeImplementationStatus(
         DemoDataProfile $profile,
         string $referenceDate,
         string $tenantOption,
         array $skipFlags,
+        array $tenantDatabases,
     ): void {
         $targets = $profile->targets();
         $enabledSkipFlags = array_keys(array_filter($skipFlags, static fn (bool $value): bool => $value));
+        $datasetVersion = DemoConfigurationData::fromConfig()->datasetVersion;
 
         $content = implode(PHP_EOL, [
             '# Implementation Status',
             '',
             '## Demo Dataset',
             '',
+            sprintf('- Dataset version: `%s`', $datasetVersion),
             sprintf('- Dataset profile: `%s`', $profile->value),
             sprintf('- Reference date: `%s`', $referenceDate),
             sprintf('- Tenant scope: `%s`', $tenantOption),
             sprintf('- Seeded at (UTC): `%s`', now()->utc()->toIso8601String()),
+            sprintf('- Tenant databases: %s', $tenantDatabases === [] ? '`none`' : '`'.implode('`, `', $tenantDatabases).'`'),
             sprintf('- Active skip flags: %s', $enabledSkipFlags === [] ? '`none`' : '`'.implode('`, `', $enabledSkipFlags).'`'),
             '',
             '## Profile Target Scale',
@@ -237,13 +281,29 @@ final class DemoDatasetManager
 
     private function recordResetAuditEvent(string $tenantOption, bool $keepDatabases): void
     {
+        $payload = [
+            'tenant_option' => $tenantOption,
+            'keep_databases' => $keepDatabases,
+            'reset_at_utc' => now()->utc()->toIso8601String(),
+        ];
+
+        $this->recordAuditEvent('demo.reset', $tenantOption, $payload);
+
         CentralSetting::query()->updateOrCreate(
             ['key' => 'demo.audit.last_reset'],
-            ['value' => json_encode([
-                'tenant_option' => $tenantOption,
-                'keep_databases' => $keepDatabases,
-                'reset_at_utc' => now()->utc()->toIso8601String(),
-            ], JSON_UNESCAPED_SLASHES)]
+            ['value' => json_encode($payload, JSON_UNESCAPED_SLASHES)]
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function recordAuditEvent(string $eventType, string $tenantScope, array $payload): void
+    {
+        DemoAuditEvent::query()->create([
+            'event_type' => $eventType,
+            'tenant_scope' => $tenantScope,
+            'payload' => $payload,
+        ]);
     }
 }
