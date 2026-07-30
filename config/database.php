@@ -1,6 +1,8 @@
 <?php
 
-use PDO;
+$mysqlAttrSslCa = defined('\Pdo\Mysql::ATTR_SSL_CA')
+    ? \Pdo\Mysql::ATTR_SSL_CA
+    : \PDO::MYSQL_ATTR_SSL_CA;
 
 return [
 
@@ -50,7 +52,7 @@ return [
             'options' => extension_loaded('pdo_mysql')
                 ? array_filter([
                     PDO::ATTR_TIMEOUT => (int) env('CENTRAL_DB_CONNECT_TIMEOUT', 5),
-                    PDO::MYSQL_ATTR_SSL_CA => env('CENTRAL_DB_SSL_CA'),
+                    $mysqlAttrSslCa => env('CENTRAL_DB_SSL_CA'),
                 ])
                 : [],
         ],
@@ -79,7 +81,7 @@ return [
             'options' => extension_loaded('pdo_mysql')
                 ? array_filter([
                     PDO::ATTR_TIMEOUT => (int) env('TENANT_DB_CONNECT_TIMEOUT', 5),
-                    PDO::MYSQL_ATTR_SSL_CA => env('TENANT_DB_SSL_CA'),
+                    $mysqlAttrSslCa => env('TENANT_DB_SSL_CA'),
                 ])
                 : [],
         ],
@@ -108,7 +110,7 @@ return [
             'options' => extension_loaded('pdo_mysql')
                 ? array_filter([
                     PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 5),
-                    PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                    $mysqlAttrSslCa => env('MYSQL_ATTR_SSL_CA'),
                 ])
                 : [],
         ],
