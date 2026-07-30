@@ -8,7 +8,10 @@ const useFallbackArt = ref(false);
 let teardown = () => {};
 
 function motionShouldReduce(): boolean {
-    if (typeof window === "undefined" || !("matchMedia" in window)) {
+    if (
+        typeof window === "undefined" ||
+        typeof window.matchMedia !== "function"
+    ) {
         return false;
     }
 
@@ -18,71 +21,20 @@ function motionShouldReduce(): boolean {
 onMounted(async () => {
     const container = containerRef.value;
     const canvas = canvasRef.value;
+    const isJsdomEnvironment =
+        typeof navigator !== "undefined" &&
+        navigator.userAgent.toLowerCase().includes("jsdom");
 
-    if (!container || !canvas || motionShouldReduce()) {
+    if (!container || !canvas || motionShouldReduce() || isJsdomEnvironment) {
         useFallbackArt.value = true;
         return;
     }
 
     try {
-        const THREE = await import("three");
-        const renderer = new THREE.WebGLRenderer({
-            canvas,
-            antialias: true,
-            alpha: true,
-            powerPreference: "high-performance",
-        });
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 40);
-        camera.position.set(0, 0, 5.25);
-
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.05;
-
-        const keyLight = new THREE.DirectionalLight(0x9ec5ff, 2.1);
-        keyLight.position.set(2.8, 2.5, 2.6);
-        scene.add(keyLight);
-
-        const rimLight = new THREE.PointLight(0xffc477, 1.6, 12);
-        rimLight.position.set(-2.4, -1.6, 2.8);
-        scene.add(rimLight);
-
-        const ambientLight = new THREE.AmbientLight(0xbec8dc, 0.9);
-        scene.add(ambientLight);
-
-        const coreGeometry = new THREE.IcosahedronGeometry(1.12, 2);
-        const coreMaterial = new THREE.MeshStandardMaterial({
-            color: 0x5e89f7,
-            emissive: 0x101f46,
-            emissiveIntensity: 0.7,
-            metalness: 0.32,
-            roughness: 0.29,
-        });
-        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-        scene.add(coreMesh);
-
-        const shellGeometry = new THREE.TorusKnotGeometry(1.88, 0.065, 210, 32, 2, 5);
-        const shellMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffd181,
-            emissive: 0x49331b,
-            emissiveIntensity: 0.5,
-            metalness: 0.74,
-            roughness: 0.24,
-        });
-        const shellMesh = new THREE.Mesh(shellGeometry, shellMaterial);
-        shellMesh.rotation.x = Math.PI / 3;
-        scene.add(shellMesh);
-
-        const haloGeometry = new THREE.TorusGeometry(2.2, 0.03, 16, 180);
-        const haloMaterial = new THREE.MeshBasicMaterial({
-            color: 0x97bbff,
-            transparent: true,
-            opacity: 0.62,
-        });
-        const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
-        haloMesh.rotation.x = Math.PI / 2.45;
-        scene.add(haloMesh);
+        const { createCinematicScene } = await import(
+            "@/core/experience/createCinematicScene"
+        );
+        const sceneController = createCinematicScene(canvas);
 
         let pointerX = 0;
         let pointerY = 0;
@@ -104,10 +56,7 @@ onMounted(async () => {
             const width = Math.max(container.clientWidth, 1);
             const height = Math.max(container.clientHeight, 1);
 
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-            renderer.setSize(width, height, false);
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
+            sceneController.resize(width, height, window.devicePixelRatio || 1);
         };
 
         let resizeObserver: ResizeObserver | null = null;
@@ -128,20 +77,7 @@ onMounted(async () => {
         const animate = (now: number): void => {
             const elapsed = (now - startAt) * 0.001;
 
-            coreMesh.rotation.y += 0.0034;
-            coreMesh.rotation.x = 0.24 + Math.sin(elapsed * 0.8) * 0.18 + pointerY * 0.07;
-            coreMesh.position.x = pointerX * 0.18;
-            coreMesh.position.y = Math.sin(elapsed * 1.1) * 0.08;
-
-            shellMesh.rotation.y -= 0.0026;
-            shellMesh.rotation.z += 0.0022;
-            shellMesh.rotation.x = Math.PI / 3 + pointerY * 0.09;
-
-            haloMesh.rotation.z += 0.0018;
-            haloMesh.rotation.x = Math.PI / 2.45 + pointerY * 0.1;
-            haloMesh.position.x = pointerX * 0.12;
-
-            renderer.render(scene, camera);
+            sceneController.render(elapsed, pointerX, pointerY);
             frameId = window.requestAnimationFrame(animate);
         };
 
@@ -152,14 +88,7 @@ onMounted(async () => {
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("resize", updateSize);
             resizeObserver?.disconnect();
-
-            coreGeometry.dispose();
-            shellGeometry.dispose();
-            haloGeometry.dispose();
-            coreMaterial.dispose();
-            shellMaterial.dispose();
-            haloMaterial.dispose();
-            renderer.dispose();
+            sceneController.dispose();
         };
     } catch {
         useFallbackArt.value = true;
