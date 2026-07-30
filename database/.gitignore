@@ -1,1 +1,3 @@
-*.sqlite*
+# Keep ad-hoc local database artifacts out of version control.
+*.db
+*.sql

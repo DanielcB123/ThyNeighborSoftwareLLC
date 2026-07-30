@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
-use Pdo\Mysql;
+use PDO;
 
 return [
 
@@ -10,128 +10,108 @@ return [
     | Default Database Connection Name
     |--------------------------------------------------------------------------
     |
-    | Here you may specify which of the database connections below you wish
-    | to use as your default connection for database operations. This is
-    | the connection which will be utilized unless another connection
-    | is explicitly specified when you execute a query / statement.
+    | The platform always defaults to the central MySQL database connection.
+    | Tenant connections are provisioned and swapped at runtime only after
+    | tenant domain resolution has succeeded against the central registry.
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'central'),
 
     /*
     |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
-    |
-    | Below are all of the database connections defined for your application.
-    | An example configuration is provided for each database system which
-    | is supported by Laravel. You're free to add / remove connections.
-    |
     */
 
     'connections' => [
 
-        'sqlite' => [
-            'driver' => 'sqlite',
-            'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+        'central' => [
+            'driver' => 'mysql',
+            'url' => env('CENTRAL_DATABASE_URL'),
+            'host' => env('CENTRAL_DB_HOST', '127.0.0.1'),
+            'port' => env('CENTRAL_DB_PORT', '3306'),
+            'database' => env('CENTRAL_DB_DATABASE', 'webuildyouthrive_central'),
+            'username' => env('CENTRAL_DB_USERNAME', 'root'),
+            'password' => env('CENTRAL_DB_PASSWORD', ''),
+            'unix_socket' => env('CENTRAL_DB_SOCKET', ''),
+            'charset' => env('CENTRAL_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('CENTRAL_DB_COLLATION', 'utf8mb4_0900_ai_ci'),
             'prefix' => '',
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'timezone' => env('CENTRAL_DB_TIMEZONE', '+00:00'),
+            'engine' => 'InnoDB',
+            'modes' => [
+                'STRICT_TRANS_TABLES',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                'NO_ENGINE_SUBSTITUTION',
+            ],
+            'sslmode' => env('CENTRAL_DB_SSL_MODE', 'preferred'),
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    PDO::ATTR_TIMEOUT => (int) env('CENTRAL_DB_CONNECT_TIMEOUT', 5),
+                    PDO::MYSQL_ATTR_SSL_CA => env('CENTRAL_DB_SSL_CA'),
+                ])
+                : [],
+        ],
+
+        'tenant' => [
+            'driver' => 'mysql',
+            'host' => null,
+            'port' => env('TENANT_DB_PORT', '3306'),
+            'database' => null,
+            'username' => null,
+            'password' => null,
+            'unix_socket' => '',
+            'charset' => env('TENANT_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('TENANT_DB_COLLATION', 'utf8mb4_0900_ai_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'timezone' => env('TENANT_DB_TIMEZONE', '+00:00'),
+            'engine' => 'InnoDB',
+            'modes' => [
+                'STRICT_TRANS_TABLES',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                'NO_ENGINE_SUBSTITUTION',
+            ],
+            'sslmode' => env('TENANT_DB_SSL_MODE', 'preferred'),
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    PDO::ATTR_TIMEOUT => (int) env('TENANT_DB_CONNECT_TIMEOUT', 5),
+                    PDO::MYSQL_ATTR_SSL_CA => env('TENANT_DB_SSL_CA'),
+                ])
+                : [],
         ],
 
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => env('DB_HOST', env('CENTRAL_DB_HOST', '127.0.0.1')),
+            'port' => env('DB_PORT', env('CENTRAL_DB_PORT', '3306')),
+            'database' => env('DB_DATABASE', env('CENTRAL_DB_DATABASE', 'webuildyouthrive_central')),
+            'username' => env('DB_USERNAME', env('CENTRAL_DB_USERNAME', 'root')),
+            'password' => env('DB_PASSWORD', env('CENTRAL_DB_PASSWORD', '')),
             'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_0900_ai_ci'),
+            'charset' => env('DB_CHARSET', env('CENTRAL_DB_CHARSET', 'utf8mb4')),
+            'collation' => env('DB_COLLATION', env('CENTRAL_DB_COLLATION', 'utf8mb4_0900_ai_ci')),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'engine' => env('DB_ENGINE', 'InnoDB'),
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-
-        'mariadb' => [
-            'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_0900_ai_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => env('DB_ENGINE', 'InnoDB'),
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-
-        'central' => [
-            'driver' => env('CENTRAL_DB_DRIVER', env('DB_CONNECTION', 'sqlite')),
-            'url' => env('CENTRAL_DB_URL', env('DB_URL')),
-            'host' => env('CENTRAL_DB_HOST', env('DB_HOST', '127.0.0.1')),
-            'port' => env('CENTRAL_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('CENTRAL_DB_DATABASE', env('DB_DATABASE', database_path('database.sqlite'))),
-            'username' => env('CENTRAL_DB_USERNAME', env('DB_USERNAME', 'root')),
-            'password' => env('CENTRAL_DB_PASSWORD', env('DB_PASSWORD', '')),
-            'unix_socket' => env('CENTRAL_DB_SOCKET', env('DB_SOCKET', '')),
-            'charset' => env('CENTRAL_DB_CHARSET', env('DB_CHARSET', 'utf8mb4')),
-            'collation' => env('CENTRAL_DB_COLLATION', env('DB_COLLATION', 'utf8mb4_0900_ai_ci')),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => env('CENTRAL_DB_ENGINE', env('DB_ENGINE', 'InnoDB')),
-            'foreign_key_constraints' => env('CENTRAL_DB_FOREIGN_KEYS', env('DB_FOREIGN_KEYS', true)),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('CENTRAL_MYSQL_ATTR_SSL_CA', env('MYSQL_ATTR_SSL_CA')),
-            ]) : [],
-        ],
-
-        'tenant' => [
-            'driver' => env('TENANT_DB_DRIVER', env('DB_CONNECTION', 'sqlite')),
-            'url' => env('TENANT_DB_URL', env('DB_URL')),
-            'host' => env('TENANT_DB_HOST', env('DB_HOST', '127.0.0.1')),
-            'port' => env('TENANT_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('TENANT_DB_DATABASE', env('DB_DATABASE', database_path('database.sqlite'))),
-            'username' => env('TENANT_DB_USERNAME', env('DB_USERNAME', 'root')),
-            'password' => env('TENANT_DB_PASSWORD', env('DB_PASSWORD', '')),
-            'unix_socket' => env('TENANT_DB_SOCKET', env('DB_SOCKET', '')),
-            'charset' => env('TENANT_DB_CHARSET', env('DB_CHARSET', 'utf8mb4')),
-            'collation' => env('TENANT_DB_COLLATION', env('DB_COLLATION', 'utf8mb4_0900_ai_ci')),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => env('TENANT_DB_ENGINE', env('DB_ENGINE', 'InnoDB')),
-            'foreign_key_constraints' => env('TENANT_DB_FOREIGN_KEYS', env('DB_FOREIGN_KEYS', true)),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('TENANT_MYSQL_ATTR_SSL_CA', env('MYSQL_ATTR_SSL_CA')),
-            ]) : [],
+            'timezone' => env('DB_TIMEZONE', env('CENTRAL_DB_TIMEZONE', '+00:00')),
+            'engine' => 'InnoDB',
+            'modes' => [
+                'STRICT_TRANS_TABLES',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                'NO_ENGINE_SUBSTITUTION',
+            ],
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 5),
+                    PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                ])
+                : [],
         ],
 
         'pgsql' => [
@@ -160,8 +140,6 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            // 'encrypt' => env('DB_ENCRYPT', 'yes'),
-            // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
     ],
@@ -170,11 +148,6 @@ return [
     |--------------------------------------------------------------------------
     | Migration Repository Table
     |--------------------------------------------------------------------------
-    |
-    | This table keeps track of all the migrations that have already run for
-    | your application. Using this information, we can determine which of
-    | the migrations on disk haven't actually been run on the database.
-    |
     */
 
     'migrations' => [
@@ -186,11 +159,6 @@ return [
     |--------------------------------------------------------------------------
     | Redis Databases
     |--------------------------------------------------------------------------
-    |
-    | Redis is an open source, fast, and advanced key-value store that also
-    | provides a richer body of commands than a typical key-value system
-    | such as Memcached. You may define your connection settings here.
-    |
     */
 
     'redis' => [
@@ -199,7 +167,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
+            'prefix' => env('REDIS_PREFIX', 'wbyt-redis-'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
@@ -223,6 +191,32 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
+            'max_retries' => env('REDIS_MAX_RETRIES', 3),
+            'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+            'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+            'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
+        ],
+
+        'session' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_SESSION_DB', '2'),
+            'max_retries' => env('REDIS_MAX_RETRIES', 3),
+            'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+            'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+            'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
+        ],
+
+        'queue' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_QUEUE_DB', '3'),
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),

@@ -23,9 +23,22 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
+        <env name="DB_CONNECTION" value="central"/>
+        <env name="CENTRAL_DB_HOST" value="mysql"/>
+        <env name="CENTRAL_DB_PORT" value="3306"/>
+        <env name="CENTRAL_DB_DATABASE" value="wbyt_test_central"/>
+        <env name="CENTRAL_DB_USERNAME" value="root"/>
+        <env name="CENTRAL_DB_PASSWORD" value=""/>
+        <env name="CENTRAL_DB_CHARSET" value="utf8mb4"/>
+        <env name="CENTRAL_DB_COLLATION" value="utf8mb4_0900_ai_ci"/>
+        <env name="CENTRAL_DB_SSL_MODE" value="preferred"/>
+        <env name="TENANT_DB_DRIVER" value="mysql"/>
+        <env name="TENANT_DB_PORT" value="3306"/>
+        <env name="TENANT_DB_CHARSET" value="utf8mb4"/>
+        <env name="TENANT_DB_COLLATION" value="utf8mb4_0900_ai_ci"/>
+        <env name="TENANT_DB_SSL_MODE" value="preferred"/>
+        <env name="TEST_CENTRAL_DB_DATABASE" value="wbyt_test_central"/>
+        <env name="TEST_TENANT_DB_PREFIX" value="wbyt_test_tenant_"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
