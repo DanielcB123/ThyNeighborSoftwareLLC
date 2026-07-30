@@ -26,4 +26,5 @@ This incident tracks local tenancy-resolution correctness for:
 - `root-cause-analysis.md` — primary and contributing causes
 - `remediation-log.md` — implementation actions taken
 - `verification-results.md` — command/test verification evidence
+- `runtime-audit-2026-07-30.md` — local runtime evidence and remediation closure
 - `command-output/` — raw command outputs captured during this incident
