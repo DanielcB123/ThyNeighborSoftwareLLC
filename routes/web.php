@@ -116,7 +116,318 @@ $demoTenantPublicBlocks = static function (?array $tenantContext = null): array 
     ];
 };
 
-Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
+/**
+ * @var array<int, array<string, string>>
+ */
+$platformFeaturedProjects = [
+    [
+        'id' => 'meridian-medical-network',
+        'title' => 'Meridian Medical Network Experience Platform',
+        'sector' => 'Healthcare group operations',
+        'summary' => 'Unified acquisition website, patient portal handoff, and role-aware operations console for six regional locations.',
+        'impact' => 'Delivered a cohesive patient journey while preserving strict compliance and location-level operational autonomy.',
+        'spotlight' => 'Portal engagement climbed after replacing fragmented intake forms and disconnected scheduling paths.',
+        'accentFrom' => '#7b8bff',
+        'accentTo' => '#3dddcf',
+    ],
+    [
+        'id' => 'northgate-logistics-command',
+        'title' => 'Northgate Logistics Dispatch Command Surface',
+        'sector' => 'Multi-location field services',
+        'summary' => 'Rebuilt dispatch lifecycle with customer-facing ETA flows, technician route orchestration, and billing visibility.',
+        'impact' => 'Frontline teams gained shared real-time state without giving up branch-specific controls.',
+        'spotlight' => 'Reduced handoff errors by replacing spreadsheet status loops with role-scoped live dashboards.',
+        'accentFrom' => '#806bff',
+        'accentTo' => '#20d2ff',
+    ],
+    [
+        'id' => 'summit-finance-analytics',
+        'title' => 'Summit Finance Reporting and Revenue Intelligence Suite',
+        'sector' => 'Enterprise finance operations',
+        'summary' => 'Connected billing streams, payout reconciliation, and executive KPI views into a single tenant-safe reporting system.',
+        'impact' => 'Leadership finally got one trusted operating view across departments and partner entities.',
+        'spotlight' => 'Eliminated slow monthly reconciliation drills by automating exceptions and approval routing.',
+        'accentFrom' => '#9f74ff',
+        'accentTo' => '#5ae3a6',
+    ],
+    [
+        'id' => 'atlas-home-services-relaunch',
+        'title' => 'Atlas Home Services Public Brand Relaunch',
+        'sector' => 'Service brand marketing',
+        'summary' => 'Premium project-first website experience with conversion pathways tied directly to schedule and estimate workflows.',
+        'impact' => 'Positioned the brand as premium while keeping conversion journeys explicit and measurable.',
+        'spotlight' => 'Boosted qualified lead quality by aligning visual storytelling with operational service zones.',
+        'accentFrom' => '#5f7eff',
+        'accentTo' => '#50f0d8',
+    ],
+];
+
+/**
+ * @var array<int, array<string, mixed>>
+ */
+$platformCapabilityTracks = [
+    [
+        'id' => 'experience-direction',
+        'label' => '01',
+        'title' => 'Experience direction and visual systems',
+        'details' => [
+            'Editorial hierarchy, component rhythm, and resilient interaction grammar.',
+            'Image-led layout systems calibrated for desktop, tablet, and mobile pacing.',
+            'Design tokens and scalable implementation standards for long-term maintainability.',
+        ],
+    ],
+    [
+        'id' => 'frontend-engineering',
+        'label' => '02',
+        'title' => 'Frontend architecture and immersive interaction engineering',
+        'details' => [
+            'Typed Vue implementation with clear ownership boundaries and predictable state.',
+            'Selective 3D/WebGL enhancements with reduced-motion and accessibility safeguards.',
+            'Performance-aware asset and animation strategies tuned for real-world devices.',
+        ],
+    ],
+    [
+        'id' => 'backend-operations',
+        'label' => '03',
+        'title' => 'Backend systems, security posture, and runtime operations',
+        'details' => [
+            'Role and capability-aware navigation contracts driven from backend policy rules.',
+            'Tenant-safe architecture patterns for multi-location or multi-brand platforms.',
+            'Operational observability, release controls, and long-term support workflows.',
+        ],
+    ],
+];
+
+/**
+ * @var array<int, array<string, mixed>>
+ */
+$platformSurfaces = [
+    [
+        'id' => 'surface-public',
+        'surface' => 'Public experience',
+        'title' => 'High-conviction brand websites that convert without feeling generic',
+        'description' => 'Narrative-rich marketing surfaces designed to communicate craft, trust, and differentiation in the first minute.',
+        'outcomes' => [
+            'Project-first storytelling with clear offer architecture',
+            'Structured lead paths and contact funnels tied to business goals',
+            'Motion and media systems that support readability, not distraction',
+        ],
+    ],
+    [
+        'id' => 'surface-portal',
+        'surface' => 'Customer and partner portals',
+        'title' => 'Role-aware portals for requests, account visibility, and communication',
+        'description' => 'Secure and usable interfaces that move customer workflows out of inbox chaos and into predictable systems.',
+        'outcomes' => [
+            'Authenticated user journeys with explicit access boundaries',
+            'Tenant-branded UX layers without copy-pasted code branches',
+            'Workflow continuity from public touchpoint to logged-in operations',
+        ],
+    ],
+    [
+        'id' => 'surface-operations',
+        'surface' => 'Operations and reporting',
+        'title' => 'Operational dashboards that leadership and frontline teams can trust',
+        'description' => 'Decision-making surfaces that make status, performance, and financial signals immediately actionable.',
+        'outcomes' => [
+            'Capability-filtered modules for teams with different responsibilities',
+            'Cross-surface consistency between dispatch, CRM, billing, and reporting',
+            'Production quality controls for reliability under ongoing iteration',
+        ],
+    ],
+];
+
+/**
+ * @var array<int, array<string, string>>
+ */
+$platformDeliveryPhases = [
+    [
+        'id' => 'phase-1',
+        'phase' => 'Phase 01',
+        'title' => 'Discovery and system framing',
+        'details' => 'We define business outcomes, identify surface boundaries, and map conversion and operational constraints before aesthetics are finalized.',
+    ],
+    [
+        'id' => 'phase-2',
+        'phase' => 'Phase 02',
+        'title' => 'Experience direction and prototyping',
+        'details' => 'We establish visual language, interaction behavior, and content hierarchy through production-grade prototypes instead of static placeholders.',
+    ],
+    [
+        'id' => 'phase-3',
+        'phase' => 'Phase 03',
+        'title' => 'Engineering and integration',
+        'details' => 'We implement frontend and backend contracts together so immersive presentation and operational logic stay aligned from day one.',
+    ],
+    [
+        'id' => 'phase-4',
+        'phase' => 'Phase 04',
+        'title' => 'Launch hardening and growth',
+        'details' => 'We tune performance, analytics, accessibility, and release workflows to support confident growth after launch.',
+    ],
+];
+
+/**
+ * @var array<string, array<string, mixed>>
+ */
+$platformChapterScenarios = [
+    'home' => [
+        'meta' => [
+            'title' => 'WeBuildYouThrive | Cinematic product and platform experiences',
+            'description' => 'Project-first digital experiences engineered for growth, operations, and long-term maintainability.',
+        ],
+        'hero' => [
+            'eyebrow' => 'Cinematic frontend and platform execution',
+            'title' => 'We build digital experiences that feel unforgettable and run like serious software.',
+            'summary' => 'Your public website should prove the quality of your backend systems, not hide them. We design and engineer both with one cohesive production standard.',
+            'chapterLabel' => 'Current chapter',
+            'chapterLead' => 'Home: immersive overview of how visual craft, frontend architecture, and operational software delivery work together.',
+            'primaryAction' => [
+                'label' => 'Start a discovery session',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'Explore service tracks',
+                'path' => '/services',
+            ],
+        ],
+        'closingCta' => [
+            'heading' => 'If your current site feels generic, your prospects can feel it immediately.',
+            'description' => 'We design and ship differentiated public experiences, secure customer portals, and operational systems under one production strategy.',
+            'primaryAction' => [
+                'label' => 'Book technical discovery',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'Review industry applications',
+                'path' => '/industries',
+            ],
+        ],
+    ],
+    'services' => [
+        'meta' => [
+            'title' => 'WeBuildYouThrive Services | Creative direction, engineering, and platform delivery',
+            'description' => 'Service tracks spanning experience direction, frontend engineering, and backend operations.',
+        ],
+        'hero' => [
+            'eyebrow' => 'Service portfolio',
+            'title' => 'From bold visual storytelling to enterprise runtime clarity.',
+            'summary' => 'We combine creative direction and software engineering so your website, customer portal, and operational dashboards feel unified and dependable.',
+            'chapterLabel' => 'Current chapter',
+            'chapterLead' => 'Services: a structured view of capabilities you can engage independently or as one integrated delivery team.',
+            'primaryAction' => [
+                'label' => 'Request capability workshop',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'See industry patterns',
+                'path' => '/industries',
+            ],
+        ],
+        'closingCta' => [
+            'heading' => 'Need a team that can handle design intensity and architecture depth?',
+            'description' => 'We can lead strategy, execute implementation, and support long-term platform operations without handoff chaos.',
+            'primaryAction' => [
+                'label' => 'Talk with engineering leadership',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'Return to experience overview',
+                'path' => '/',
+            ],
+        ],
+    ],
+    'industries' => [
+        'meta' => [
+            'title' => 'WeBuildYouThrive Industries | Sector-specific software and experience delivery',
+            'description' => 'Applications for service businesses, healthcare groups, and enterprise multi-location operations.',
+        ],
+        'hero' => [
+            'eyebrow' => 'Industry applications',
+            'title' => 'Sector complexity translated into clear digital experiences and robust systems.',
+            'summary' => 'We tailor visual identity, conversion pathways, and operations software to each market while protecting maintainability and governance.',
+            'chapterLabel' => 'Current chapter',
+            'chapterLead' => 'Industries: where we adapt common platform strengths to domain-specific workflows, constraints, and trust signals.',
+            'primaryAction' => [
+                'label' => 'Discuss your operating model',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'View service tracks',
+                'path' => '/services',
+            ],
+        ],
+        'closingCta' => [
+            'heading' => 'Your market has patterns. Your digital experience should still feel singular.',
+            'description' => 'We map domain constraints to intentional design and engineering decisions so differentiation does not compromise reliability.',
+            'primaryAction' => [
+                'label' => 'Plan an industry-focused build',
+                'path' => '/contact',
+            ],
+            'secondaryAction' => [
+                'label' => 'See full capability overview',
+                'path' => '/',
+            ],
+        ],
+    ],
+    'contact' => [
+        'meta' => [
+            'title' => 'Contact WeBuildYouThrive | Start your next platform experience',
+            'description' => 'Share your requirements for public experiences, customer portals, and internal operations software.',
+        ],
+        'hero' => [
+            'eyebrow' => 'Let us build what others cannot',
+            'title' => 'Bring us the website and system constraints that your current stack cannot satisfy.',
+            'summary' => 'Tell us what needs to perform better: conversion quality, user trust, operational visibility, or release velocity. We will shape a production path that fits.',
+            'chapterLabel' => 'Current chapter',
+            'chapterLead' => 'Contact: practical next step for teams that need both a premium public experience and serious backend execution.',
+            'primaryAction' => [
+                'label' => 'Email hello@webuildyouthrive.com',
+                'path' => 'mailto:hello@webuildyouthrive.com',
+            ],
+            'secondaryAction' => [
+                'label' => 'Explore project narratives',
+                'path' => '/',
+            ],
+        ],
+        'closingCta' => [
+            'heading' => 'A serious digital surface should sell the work before your sales call starts.',
+            'description' => 'Send your goals and constraints. We will reply with a focused discovery path and implementation direction.',
+            'primaryAction' => [
+                'label' => 'Send project brief',
+                'path' => 'mailto:hello@webuildyouthrive.com',
+            ],
+            'secondaryAction' => [
+                'label' => 'Review service portfolio',
+                'path' => '/services',
+            ],
+        ],
+    ],
+];
+
+$renderPlatformExperience = static function (string $chapter) use (
+    $platformChapterScenarios,
+    $platformFeaturedProjects,
+    $platformCapabilityTracks,
+    $platformSurfaces,
+    $platformDeliveryPhases
+) {
+    /** @var array<string, mixed> $scenario */
+    $scenario = $platformChapterScenarios[$chapter] ?? $platformChapterScenarios['home'];
+
+    return Inertia::render('Platform/CinematicExperience', [
+        'chapter' => $chapter,
+        'meta' => $scenario['meta'],
+        'hero' => $scenario['hero'],
+        'featuredProjects' => $platformFeaturedProjects,
+        'capabilityTracks' => $platformCapabilityTracks,
+        'platformSurfaces' => $platformSurfaces,
+        'deliveryPhases' => $platformDeliveryPhases,
+        'closingCta' => $scenario['closingCta'],
+    ]);
+};
+
+Route::get('/', function (Request $request) use ($demoTenantPublicBlocks, $renderPlatformExperience) {
     /** @var array<string, mixed>|null $tenantContext */
     $tenantContext = $request->attributes->get('frontendTenantContext');
     $runtimeSurface = (string) $request->attributes->get('tenantRuntimeSurface', 'platform');
@@ -130,187 +441,19 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
         ]);
     }
 
-    return Inertia::render('Platform/Home', [
-        'blocks' => [
-            [
-                'id' => 'platform-hero',
-                'type' => 'hero',
-                'schemaVersion' => 1,
-                'data' => [
-                    'eyebrow' => 'Platform + Services',
-                    'heading' => 'Delivering custom software platforms built for tenant scale',
-                    'supportingText' => 'From strategy through implementation and operations, WeBuildYouThrive helps small businesses and enterprises run secure, maintainable web systems.',
-                    'primaryActionLabel' => 'Request A Technical Discovery Session',
-                    'primaryActionPath' => '/contact',
-                    'secondaryActionLabel' => 'Review Service Capabilities',
-                    'secondaryActionPath' => '/services',
-                ],
-            ],
-            [
-                'id' => 'platform-rich-text',
-                'type' => 'rich-text',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Implementation systems built for future growth',
-                    'paragraphs' => [
-                        'We build frontend architectures that support shared capabilities while preserving each tenant brand and operating model.',
-                        'Our approach keeps common functionality maintainable while still allowing controlled tenant-specific extensions where needed.',
-                    ],
-                ],
-            ],
-            [
-                'id' => 'platform-feature-grid',
-                'type' => 'feature-grid',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'What clients rely on',
-                    'intro' => 'Production execution supported by architecture, quality controls, and long-term maintainability.',
-                    'features' => [
-                        [
-                            'title' => 'Tenant-safe runtime contracts',
-                            'description' => 'Shared frontend and backend contracts prevent domain leakage and cross-tenant assumptions.',
-                            'label' => 'Architecture',
-                        ],
-                        [
-                            'title' => 'Role and capability-aware UI',
-                            'description' => 'Navigation and dashboard experiences are filtered through explicit access requirements.',
-                            'label' => 'Security',
-                        ],
-                        [
-                            'title' => 'Composable page blocks',
-                            'description' => 'Typed content blocks allow rapid iteration without losing schema safety.',
-                            'label' => 'Content',
-                        ],
-                        [
-                            'title' => 'Theming and design tokens',
-                            'description' => 'Tenant websites keep distinct brand identity while sharing the same platform core.',
-                            'label' => 'Experience',
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'id' => 'platform-cta',
-                'type' => 'cta-section',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Need a system that can scale with your organization?',
-                    'description' => 'We design and implement tenant-aware platforms for businesses that need reliability, security, and operational clarity.',
-                    'actionLabel' => 'Talk to our engineering team',
-                    'actionPath' => '/contact',
-                ],
-            ],
-        ],
-    ]);
+    return $renderPlatformExperience('home');
 })->name('platform.home');
 
-Route::get('/services', function () {
-    return Inertia::render('Platform/Home', [
-        'blocks' => [
-            [
-                'id' => 'services-hero',
-                'type' => 'hero',
-                'schemaVersion' => 1,
-                'data' => [
-                    'eyebrow' => 'Service Portfolio',
-                    'heading' => 'Engineering, frontend architecture, and enterprise operations support',
-                    'supportingText' => 'Our delivery model supports platform modernization, tenant-ready frontend systems, and long-term release operations.',
-                    'primaryActionLabel' => 'Book a technical planning session',
-                    'primaryActionPath' => '/contact',
-                    'secondaryActionLabel' => 'Review supported industries',
-                    'secondaryActionPath' => '/industries',
-                ],
-            ],
-            [
-                'id' => 'services-cta',
-                'type' => 'cta-section',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Need a targeted roadmap for your platform?',
-                    'description' => 'We provide phased implementation plans and execution support tailored to your architecture and business operations.',
-                    'actionLabel' => 'Contact our team',
-                    'actionPath' => '/contact',
-                ],
-            ],
-        ],
-    ]);
+Route::get('/services', function () use ($renderPlatformExperience) {
+    return $renderPlatformExperience('services');
 })->name('platform.services');
 
-Route::get('/industries', function () {
-    return Inertia::render('Platform/Home', [
-        'blocks' => [
-            [
-                'id' => 'industries-hero',
-                'type' => 'hero',
-                'schemaVersion' => 1,
-                'data' => [
-                    'eyebrow' => 'Industry Applications',
-                    'heading' => 'Operational software for service businesses, healthcare groups, and enterprise organizations',
-                    'supportingText' => 'We adapt shared platform foundations to industry-specific workflows without tenant-name conditionals and one-off code paths.',
-                    'primaryActionLabel' => 'Discuss your industry requirements',
-                    'primaryActionPath' => '/contact',
-                ],
-            ],
-            [
-                'id' => 'industries-feature-grid',
-                'type' => 'feature-grid',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'Deployment patterns we support',
-                    'intro' => 'From single-location operations to nationwide organizations with thousands of users.',
-                    'features' => [
-                        [
-                            'title' => 'Field-service dispatch operations',
-                            'description' => 'Scheduling, routing, and status visibility for service teams.',
-                        ],
-                        [
-                            'title' => 'Multi-location administrative control',
-                            'description' => 'Tenant-level segmentation with role-based module access.',
-                        ],
-                        [
-                            'title' => 'Customer-facing portals',
-                            'description' => 'Tenant-branded experiences for requests, communication, and account management.',
-                        ],
-                        [
-                            'title' => 'Dashboard-based operations',
-                            'description' => 'Capability-aware widgets for finance, customer workflows, and dispatch teams.',
-                        ],
-                    ],
-                ],
-            ],
-        ],
-    ]);
+Route::get('/industries', function () use ($renderPlatformExperience) {
+    return $renderPlatformExperience('industries');
 })->name('platform.industries');
 
-Route::get('/contact', function () {
-    return Inertia::render('Platform/Home', [
-        'blocks' => [
-            [
-                'id' => 'contact-hero',
-                'type' => 'hero',
-                'schemaVersion' => 1,
-                'data' => [
-                    'eyebrow' => 'Contact',
-                    'heading' => 'Tell us what you need to build or modernize',
-                    'supportingText' => 'Share your platform goals, tenant needs, and constraints. Our team will respond with a technical discovery path.',
-                    'primaryActionLabel' => 'Email hello@webuildyouthrive.com',
-                    'primaryActionPath' => 'mailto:hello@webuildyouthrive.com',
-                ],
-            ],
-            [
-                'id' => 'contact-rich-text',
-                'type' => 'rich-text',
-                'schemaVersion' => 1,
-                'data' => [
-                    'heading' => 'What to include in your message',
-                    'paragraphs' => [
-                        'Describe the application surfaces you need: public website, tenant admin, portal, or operational dashboards.',
-                        'List security, compliance, and integration requirements so we can shape the implementation plan correctly.',
-                    ],
-                ],
-            ],
-        ],
-    ]);
+Route::get('/contact', function () use ($renderPlatformExperience) {
+    return $renderPlatformExperience('contact');
 })->name('platform.contact');
 
 Route::get('/tenant-site', function () use ($demoTenantFrontendContext, $demoTenantPublicBlocks) {

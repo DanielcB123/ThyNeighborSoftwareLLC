@@ -13,40 +13,52 @@ const urlBuilder = useUrlBuilder();
 const navigationItems = usePrimaryNavigation();
 
 const homeUrl = computed(() => urlBuilder.platformPublic("/"));
+const contactUrl = computed(() => urlBuilder.platformPublic("/contact"));
 </script>
 
 <template>
-    <div class="wb-shell-surface" data-surface="platform">
-        <header class="border-b bg-white">
+    <div class="wb-shell-surface wb-platform-shell" data-surface="platform">
+        <header class="wb-platform-shell__header">
             <div
-                class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-4 py-6 sm:px-6 lg:px-8"
+                class="mx-auto flex w-full max-w-[92rem] flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10"
             >
-                <a :href="homeUrl" class="text-lg font-semibold text-slate-900">
+                <a
+                    :href="homeUrl"
+                    class="wb-platform-shell__brand"
+                    aria-label="WeBuildYouThrive home"
+                >
                     WeBuildYouThrive
                 </a>
-                <NavigationMenu
-                    :items="navigationItems"
-                    aria-label="Platform primary navigation"
-                />
+                <div class="wb-platform-shell__header-right">
+                    <NavigationMenu
+                        :items="navigationItems"
+                        aria-label="Platform primary navigation"
+                    />
+                    <a :href="contactUrl" class="wb-platform-shell__contact-cta">
+                        Start a build
+                    </a>
+                </div>
             </div>
         </header>
-        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <header class="mb-8">
-                <h1 class="text-3xl font-bold text-slate-900">
-                    {{ props.pageTitle }}
-                </h1>
-                <p v-if="props.pageSummary" class="mt-2 text-sm text-slate-600">
+
+        <main class="wb-platform-shell__main">
+            <header class="sr-only">
+                <h1>{{ props.pageTitle }}</h1>
+                <p v-if="props.pageSummary">
                     {{ props.pageSummary }}
                 </p>
             </header>
             <slot />
         </main>
-        <footer class="border-t bg-white py-6">
+
+        <footer class="wb-platform-shell__footer">
             <div
-                class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-slate-600 sm:px-6 lg:px-8"
+                class="mx-auto flex w-full max-w-[92rem] flex-wrap items-center justify-between gap-4 px-5 py-6 text-sm text-slate-400 sm:px-8 lg:px-10"
             >
                 <p>© {{ new Date().getFullYear() }} WeBuildYouThrive.</p>
-                <span class="wb-pill">Platform Public Surface</span>
+                <span class="wb-platform-shell__footer-tag">
+                    Platform public experience
+                </span>
             </div>
         </footer>
     </div>

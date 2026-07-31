@@ -41,6 +41,7 @@
         "vue-tsc": "^3.3.8"
     },
     "dependencies": {
+        "three": "^0.185.1",
         "ziggy-js": "^2.6.3"
     }
 }

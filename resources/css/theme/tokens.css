@@ -31,6 +31,91 @@
     color: var(--wb-color-text);
 }
 
+.wb-platform-shell {
+    background:
+        radial-gradient(circle at 15% 0%, rgba(82, 88, 181, 0.28), transparent 48%),
+        radial-gradient(circle at 88% 74%, rgba(38, 152, 150, 0.2), transparent 55%),
+        linear-gradient(155deg, #060912 12%, #0d1222 56%, #121a32 100%);
+    color: #ecf1ff;
+}
+
+.wb-platform-shell__header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid rgba(120, 131, 207, 0.32);
+    background: rgba(8, 12, 24, 0.75);
+    backdrop-filter: blur(10px);
+}
+
+.wb-platform-shell__header-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.wb-platform-shell__brand {
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: rgba(235, 241, 255, 0.97);
+    text-decoration: none;
+}
+
+.wb-platform-shell__brand:hover,
+.wb-platform-shell__brand:focus-visible {
+    color: #ffffff;
+}
+
+.wb-platform-shell__contact-cta {
+    display: inline-flex;
+    min-height: 2.35rem;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(130, 143, 232, 0.64);
+    background: rgba(94, 107, 219, 0.18);
+    color: #e7ecff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 0.86rem;
+    text-decoration: none;
+    transition:
+        border-color 180ms ease,
+        transform 180ms ease;
+}
+
+.wb-platform-shell__contact-cta:hover,
+.wb-platform-shell__contact-cta:focus-visible {
+    border-color: rgba(161, 173, 255, 0.92);
+    transform: translateY(-1px);
+}
+
+.wb-platform-shell__main {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 92rem;
+    padding: clamp(1.55rem, 3vw, 2.4rem) clamp(1.25rem, 3vw, 2.5rem) 0;
+}
+
+.wb-platform-shell__footer {
+    margin-top: clamp(2rem, 5vw, 4rem);
+    border-top: 1px solid rgba(117, 130, 214, 0.24);
+}
+
+.wb-platform-shell__footer-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(116, 130, 211, 0.4);
+    padding: 0.25rem 0.58rem;
+    color: rgba(197, 207, 247, 0.9);
+    font-size: 0.73rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
 .wb-card {
     background-color: var(--wb-color-surface);
     border: 1px solid var(--wb-color-border);
@@ -65,10 +150,50 @@
     font-size: 0.875rem;
     font-weight: 600;
     text-decoration: none;
+    transition: color 180ms ease;
 }
 
 .navigation-menu__link:hover,
 .navigation-menu__link:focus-visible {
     color: var(--wb-color-primary);
     text-decoration: underline;
+}
+
+.wb-platform-shell .navigation-menu__list {
+    gap: 0.78rem;
+}
+
+.wb-platform-shell .navigation-menu__link {
+    color: rgba(208, 218, 248, 0.88);
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.wb-platform-shell .navigation-menu__link:hover,
+.wb-platform-shell .navigation-menu__link:focus-visible {
+    color: #f3f6ff;
+    text-decoration: none;
+}
+
+@media (max-width: 900px) {
+    .wb-platform-shell__header-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .wb-platform-shell__contact-cta {
+        margin-top: 0.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wb-platform-shell__contact-cta {
+        transition: none;
+    }
+
+    .wb-platform-shell__contact-cta:hover,
+    .wb-platform-shell__contact-cta:focus-visible {
+        transform: none;
+    }
 }

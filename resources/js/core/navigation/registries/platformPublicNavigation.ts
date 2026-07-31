@@ -30,12 +30,12 @@ export function getPlatformPublicNavigationItems(): readonly NavigationItem[] {
             },
         },
         {
-            id: "client-login",
-            label: "Client Login",
+            id: "contact",
+            label: "Contact",
             target: {
                 kind: "internal",
-                surface: "platform-auth",
-                path: "/login",
+                surface: "platform-public",
+                path: "/contact",
             },
         },
     ];
