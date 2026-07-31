@@ -1,11 +1,14 @@
 import type { Component } from "vue";
 import CTASectionBlock from "@/core/blocks/components/CTASectionBlock.vue";
+import ExperienceStageBlock from "@/core/blocks/components/ExperienceStageBlock.vue";
 import FeatureGridBlock from "@/core/blocks/components/FeatureGridBlock.vue";
 import HeroBlock from "@/core/blocks/components/HeroBlock.vue";
 import RichTextBlock from "@/core/blocks/components/RichTextBlock.vue";
 import UnknownBlock from "@/core/blocks/components/UnknownBlock.vue";
 import type {
     CTASectionBlockData,
+    ExperienceStageBlockData,
+    ExperienceStageMetric,
     FeatureGridBlockData,
     FeatureGridItem,
     HeroBlockData,
@@ -18,7 +21,8 @@ type KnownBlockData =
     | HeroBlockData
     | RichTextBlockData
     | CTASectionBlockData
-    | FeatureGridBlockData;
+    | FeatureGridBlockData
+    | ExperienceStageBlockData;
 
 interface BlockDefinition<TData extends KnownBlockData> {
     type: KnownBlockType;
@@ -86,6 +90,14 @@ function parseHeroBlockData(input: unknown): HeroBlockData | null {
         readString(input, "secondaryActionLabel") ?? undefined;
     const secondaryActionPath =
         readString(input, "secondaryActionPath") ?? undefined;
+    const highlights = Array.isArray(input.highlights)
+        ? input.highlights
+              .filter(
+                  (entry): entry is string =>
+                      typeof entry === "string" && entry.trim().length > 0,
+              )
+              .map((entry) => entry.trim())
+        : [];
 
     return {
         eyebrow,
@@ -95,6 +107,7 @@ function parseHeroBlockData(input: unknown): HeroBlockData | null {
         primaryActionPath,
         secondaryActionLabel,
         secondaryActionPath,
+        highlights: highlights.length > 0 ? highlights : undefined,
     };
 }
 
@@ -196,6 +209,66 @@ function parseFeatureGridBlockData(
     };
 }
 
+function parseExperienceStageMetric(input: unknown): ExperienceStageMetric | null {
+    if (!isRecord(input)) {
+        return null;
+    }
+
+    const label = readString(input, "label");
+    const value = readString(input, "value");
+    const detail = readString(input, "detail");
+
+    if (!label || !value || !detail) {
+        return null;
+    }
+
+    return {
+        label,
+        value,
+        detail,
+    };
+}
+
+function parseExperienceStageBlockData(
+    input: unknown,
+): ExperienceStageBlockData | null {
+    if (!isRecord(input)) {
+        return null;
+    }
+
+    const eyebrow = readString(input, "eyebrow");
+    const heading = readString(input, "heading");
+    const supportingText = readString(input, "supportingText");
+    const stageLabel = readString(input, "stageLabel");
+    const rawMetrics = input.metrics;
+
+    if (
+        !eyebrow ||
+        !heading ||
+        !supportingText ||
+        !stageLabel ||
+        !Array.isArray(rawMetrics)
+    ) {
+        return null;
+    }
+
+    const metrics = rawMetrics
+        .map((entry) => parseExperienceStageMetric(entry))
+        .filter((entry): entry is ExperienceStageMetric => entry !== null);
+
+    if (metrics.length === 0) {
+        return null;
+    }
+
+    return {
+        eyebrow,
+        heading,
+        supportingText,
+        stageLabel,
+        metrics,
+    };
+}
+
 const blockDefinitions: ReadonlyMap<
     KnownBlockType,
     BlockDefinition<KnownBlockData>
@@ -234,6 +307,15 @@ const blockDefinitions: ReadonlyMap<
             schemaVersion: 1,
             component: FeatureGridBlock,
             parseData: (input) => parseFeatureGridBlockData(input),
+        },
+    ],
+    [
+        "experience-stage",
+        {
+            type: "experience-stage",
+            schemaVersion: 1,
+            component: ExperienceStageBlock,
+            parseData: (input) => parseExperienceStageBlockData(input),
         },
     ],
 ]);

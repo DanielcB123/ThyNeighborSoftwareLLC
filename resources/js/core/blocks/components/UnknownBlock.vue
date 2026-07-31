@@ -9,7 +9,7 @@ defineProps<{
 <template>
     <section
         :id="`block-${blockId}`"
-        class="wb-card border-l-4 border-l-[var(--wb-color-warning)] p-6"
+        class="wb-card border-l-4 border-l-[var(--wb-color-warning)] bg-[var(--wb-color-surface)] p-6"
     >
         <h2 class="text-lg font-semibold text-[var(--wb-color-text)]">
             Unsupported content block

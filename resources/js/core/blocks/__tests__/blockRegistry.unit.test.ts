@@ -57,4 +57,33 @@ describe("resolvePageBlocks", () => {
             expect(resolved[0].reason).toContain("schema");
         }
     });
+
+    it("resolves experience-stage block payloads", () => {
+        const blocks: readonly RawContentBlock[] = [
+            {
+                id: "experience-stage",
+                type: "experience-stage",
+                schemaVersion: 1,
+                data: {
+                    eyebrow: "Signal",
+                    heading: "Live product telemetry",
+                    supportingText: "A motion-rich but accessible scene.",
+                    stageLabel: "Runtime stage",
+                    metrics: [
+                        {
+                            label: "Surfaces",
+                            value: "5",
+                            detail: "Runtime contexts",
+                        },
+                    ],
+                },
+            },
+        ];
+
+        const resolved = resolvePageBlocks(blocks);
+
+        expect(resolved).toHaveLength(1);
+        expect(resolved[0].isKnown).toBe(true);
+        expect(resolved[0].type).toBe("experience-stage");
+    });
 });

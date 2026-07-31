@@ -6,6 +6,7 @@ export interface HeroBlockData {
     primaryActionPath: string;
     secondaryActionLabel?: string;
     secondaryActionPath?: string;
+    highlights?: readonly string[];
 }
 
 export interface RichTextBlockData {
@@ -32,8 +33,26 @@ export interface FeatureGridBlockData {
     features: readonly FeatureGridItem[];
 }
 
+export interface ExperienceStageMetric {
+    label: string;
+    value: string;
+    detail: string;
+}
+
+export interface ExperienceStageBlockData {
+    eyebrow: string;
+    heading: string;
+    supportingText: string;
+    stageLabel: string;
+    metrics: readonly ExperienceStageMetric[];
+}
+
 export type KnownBlockType =
-    "hero" | "rich-text" | "cta-section" | "feature-grid";
+    | "hero"
+    | "rich-text"
+    | "cta-section"
+    | "feature-grid"
+    | "experience-stage";
 
 export interface RawContentBlock {
     id: string;

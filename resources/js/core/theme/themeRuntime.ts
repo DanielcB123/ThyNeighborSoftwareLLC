@@ -4,18 +4,19 @@ import type { TenantThemeContext } from "@/core/runtime/frontendContext";
 const THEME_TOKEN_NAME_PATTERN = /^--wb-color-[a-z0-9-]+$/;
 
 const DEFAULT_THEME_TOKENS: Readonly<Record<string, string>> = {
-    "--wb-color-bg": "#f7f8fc",
-    "--wb-color-surface": "#ffffff",
-    "--wb-color-surface-muted": "#eef2ff",
-    "--wb-color-border": "#d4d9e8",
-    "--wb-color-text": "#0f172a",
-    "--wb-color-text-muted": "#475569",
-    "--wb-color-primary": "#1d4ed8",
-    "--wb-color-primary-contrast": "#ffffff",
-    "--wb-color-secondary": "#0ea5e9",
-    "--wb-color-danger": "#dc2626",
-    "--wb-color-success": "#15803d",
-    "--wb-color-warning": "#d97706",
+    "--wb-color-bg": "#ecebe7",
+    "--wb-color-surface": "#fbfaf8",
+    "--wb-color-surface-muted": "#f2f0ea",
+    "--wb-color-border": "#d0cbc0",
+    "--wb-color-border-strong": "#b5ad9d",
+    "--wb-color-text": "#171715",
+    "--wb-color-text-muted": "#4b4943",
+    "--wb-color-primary": "#0e5c62",
+    "--wb-color-primary-contrast": "#f3f6f6",
+    "--wb-color-secondary": "#90502a",
+    "--wb-color-danger": "#b42318",
+    "--wb-color-success": "#1f7a49",
+    "--wb-color-warning": "#b56b00",
 };
 
 export function resolveTenantThemeTokens(

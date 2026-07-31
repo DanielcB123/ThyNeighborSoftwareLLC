@@ -27,7 +27,7 @@ const widgets = computed(() =>
 <template>
     <SurfaceShell
         page-title="Operations Dashboard"
-        page-summary="Capability-aware operational metrics for tenant administrators."
+        page-summary="Live operational telemetry across dispatch, customer demand, and billing health."
     >
         <section class="grid gap-5 lg:grid-cols-3">
             <article
@@ -35,14 +35,29 @@ const widgets = computed(() =>
                 :key="widget.id"
                 class="wb-card p-6"
             >
-                <h2 class="text-lg font-semibold text-[var(--wb-color-text)]">
-                    {{ widget.title }}
-                </h2>
-                <p class="mt-2 text-sm text-[var(--wb-color-text-muted)]">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-[var(--wb-color-text)]">
+                        {{ widget.title }}
+                    </h2>
+                    <span
+                        class="rounded-[var(--wb-radius-xs)] px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.09em]"
+                        :class="{
+                            'bg-[var(--wb-color-surface-muted)] text-[var(--wb-color-text-muted)]':
+                                widget.state === 'loading',
+                            'bg-[#fff1dc] text-[var(--wb-color-warning)]':
+                                widget.state === 'empty',
+                            'bg-[#e8faef] text-[var(--wb-color-success)]':
+                                widget.state === 'data',
+                        }"
+                    >
+                        {{ widget.state }}
+                    </span>
+                </div>
+                <p class="mt-3 text-sm leading-6 text-[var(--wb-color-text-muted)]">
                     {{ widget.helperText }}
                 </p>
                 <p
-                    class="mt-5 text-2xl font-semibold"
+                    class="mt-6 text-3xl font-semibold"
                     :class="{
                         'text-[var(--wb-color-text-muted)]':
                             widget.state === 'loading',
