@@ -30,12 +30,12 @@ export function getPlatformPublicNavigationItems(): readonly NavigationItem[] {
             },
         },
         {
-            id: "client-login",
-            label: "Contact",
+            id: "start-project",
+            label: "Start Your Project",
             target: {
                 kind: "internal",
                 surface: "platform-public",
-                path: "/contact",
+                path: "/start-project",
             },
         },
     ];
