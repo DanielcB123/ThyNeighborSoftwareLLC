@@ -13,7 +13,9 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-body)', ...defaultTheme.fontFamily.sans],
+                display: ['var(--font-display)', ...defaultTheme.fontFamily.sans],
+                mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono],
             },
         },
     },

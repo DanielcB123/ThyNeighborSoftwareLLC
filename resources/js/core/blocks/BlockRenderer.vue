@@ -16,7 +16,7 @@ const resolvedBlocks = computed<readonly RenderableBlock[]>(() =>
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-12 md:space-y-16">
         <component
             :is="block.component"
             v-for="block in resolvedBlocks"

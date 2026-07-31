@@ -1,20 +1,40 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { Head } from "@inertiajs/vue3";
 import BlockRenderer from "@/core/blocks/BlockRenderer.vue";
 import type { RawContentBlock } from "@/core/blocks/types";
 import SurfaceShell from "@/layouts/shells/SurfaceShell.vue";
 
-defineProps<{
+interface TenantPageCopy {
+    readonly headTitle?: string;
+    readonly title?: string;
+    readonly summary?: string;
+}
+
+const props = defineProps<{
     blocks: readonly RawContentBlock[];
+    page?: TenantPageCopy;
 }>();
+
+const pageTitle = computed(
+    () =>
+        props.page?.title ??
+        "Customer-ready tenant websites with conversion-focused service journeys",
+);
+
+const pageSummary = computed(
+    () =>
+        props.page?.summary ??
+        "This tenant experience combines local-brand flexibility with hardened runtime boundaries, capability-aware navigation, and repeatable performance standards.",
+);
 </script>
 
 <template>
-    <Head title="Tenant Public Home" />
+    <Head :title="props.page?.headTitle ?? pageTitle" />
     <SurfaceShell
-        page-title="Customer-ready web experiences powered by tenant-owned domains"
-        page-summary="This tenant website uses typed block rendering, tenant theming, and capability-safe runtime contracts."
+        :page-title="pageTitle"
+        :page-summary="pageSummary"
     >
-        <BlockRenderer :blocks="blocks" />
+        <BlockRenderer :blocks="props.blocks" />
     </SurfaceShell>
 </template>

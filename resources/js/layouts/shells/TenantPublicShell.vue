@@ -22,6 +22,7 @@ const tenantThemeStyle = computed(() =>
     resolveTenantThemeStyle(frontendRuntime.value.tenant?.theme),
 );
 const homeUrl = computed(() => urlBuilder.tenantPublic("/"));
+const requestServiceUrl = computed(() => urlBuilder.tenantPublic("/request-service"));
 </script>
 
 <template>
@@ -30,33 +31,49 @@ const homeUrl = computed(() => urlBuilder.tenantPublic("/"));
         data-surface="tenant-public"
         :style="tenantThemeStyle"
     >
-        <header class="border-b border-[var(--wb-color-border)] bg-[var(--wb-color-surface)]">
-            <div
-                class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-4 py-6 sm:px-6 lg:px-8"
-            >
-                <a :href="homeUrl" class="text-lg font-semibold text-[var(--wb-color-text)]">
-                    {{ tenantName }}
+        <header class="border-b border-[var(--color-border)] bg-transparent">
+            <div class="wb-shell-grid flex flex-wrap items-center justify-between gap-5 py-6">
+                <a :href="homeUrl" class="grid gap-1 no-underline">
+                    <span class="wb-label text-[var(--color-text)]">{{ tenantName }}</span>
+                    <span class="wb-micro-label text-[var(--color-text-muted)]">
+                        Tenant Website Surface
+                    </span>
                 </a>
                 <NavigationMenu
                     :items="navigationItems"
                     aria-label="Tenant public website navigation"
                 />
+                <a :href="requestServiceUrl" class="wb-button wb-button--primary">
+                    Request Service
+                </a>
             </div>
         </header>
-        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <header class="mb-8">
-                <p class="wb-pill mb-3">Tenant Public Surface</p>
-                <h1 class="text-3xl font-bold text-[var(--wb-color-text)]">
+        <main id="app-main-content" class="wb-shell-grid wb-shell-section">
+            <header class="grid gap-4 py-3">
+                <p class="wb-shell-kicker">Tenant Public Surface</p>
+                <h1 class="wb-display-m max-w-4xl text-balance">
                     {{ props.pageTitle }}
                 </h1>
                 <p
                     v-if="props.pageSummary"
-                    class="mt-2 text-sm text-[var(--wb-color-text-muted)]"
+                    class="wb-body-l max-w-3xl text-pretty text-[var(--color-text-muted)]"
                 >
                     {{ props.pageSummary }}
                 </p>
             </header>
-            <slot />
+            <section class="mt-8">
+                <slot />
+            </section>
         </main>
+        <footer class="border-t border-[var(--color-border)] py-8">
+            <div class="wb-shell-grid flex flex-wrap items-center justify-between gap-4">
+                <p class="wb-body-s text-[var(--color-text-muted)]">
+                    Powered by tenant-aware runtime contracts and adaptive service workflows.
+                </p>
+                <a :href="requestServiceUrl" class="wb-button wb-button--accent">
+                    Schedule Visit
+                </a>
+            </div>
+        </footer>
     </div>
 </template>

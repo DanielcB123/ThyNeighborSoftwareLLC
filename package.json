@@ -19,6 +19,7 @@
         "@tailwindcss/forms": "^0.5.3",
         "@tailwindcss/vite": "^4.0.0",
         "@types/node": "^26.1.2",
+        "@types/three": "^0.185.1",
         "@vitejs/plugin-vue": "^6.0.0",
         "@vitest/coverage-v8": "^4.1.10",
         "@vue/test-utils": "^2.4.11",
@@ -41,6 +42,7 @@
         "vue-tsc": "^3.3.8"
     },
     "dependencies": {
+        "three": "^0.185.1",
         "ziggy-js": "^2.6.3"
     }
 }

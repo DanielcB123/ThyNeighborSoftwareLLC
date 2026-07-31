@@ -9,12 +9,12 @@ defineProps<{
 <template>
     <section
         :id="`block-${blockId}`"
-        class="wb-card border-l-4 border-l-[var(--wb-color-warning)] p-6"
+        class="wb-section-frame border-l-4 border-l-[var(--color-warning)] p-6"
     >
-        <h2 class="text-lg font-semibold text-[var(--wb-color-text)]">
+        <h2 class="wb-heading-3">
             Unsupported content block
         </h2>
-        <p class="mt-2 text-sm text-[var(--wb-color-text-muted)]">
+        <p class="wb-body-s mt-2 text-[var(--color-text-muted)]">
             Block type <code class="font-mono">{{ blockType }}</code> could not be
             rendered because {{ reason }}.
         </p>

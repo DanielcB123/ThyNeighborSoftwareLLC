@@ -2,3 +2,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html,
+    body {
+        background-color: var(--color-canvas);
+        color: var(--color-text);
+        font-family: var(--font-body);
+    }
+
+    body {
+        line-height: 1.5;
+        text-rendering: optimizeLegibility;
+    }
+
+    *:focus-visible {
+        outline-color: var(--color-focus);
+    }
+}
+
+@layer components {
+    .wb-skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        z-index: 80;
+        border-radius: 0.7rem;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-text);
+        font-size: var(--type-body-s);
+        font-weight: 600;
+        padding: 0.6rem 0.85rem;
+        transition: top 150ms ease;
+    }
+
+    .wb-skip-link:focus {
+        top: 1rem;
+    }
+}

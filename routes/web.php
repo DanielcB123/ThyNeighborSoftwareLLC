@@ -50,12 +50,12 @@ $demoTenantPublicBlocks = static function (?array $tenantContext = null): array 
             'type' => 'hero',
             'schemaVersion' => 1,
             'data' => [
-                'eyebrow' => 'Customer-ready tenant frontend',
+                'eyebrow' => 'Tenant Experience Demo',
                 'heading' => $tenantTagline,
-                'supportingText' => 'This domain is tenant-resolved from the central registry and rendered through the tenant runtime surface.',
-                'primaryActionLabel' => 'Request Service',
+                'supportingText' => 'High-conversion public websites can stay fully tenant-branded while still running on hardened shared runtime contracts.',
+                'primaryActionLabel' => 'Request A Service Visit',
                 'primaryActionPath' => '/request-service',
-                'secondaryActionLabel' => 'Explore Services',
+                'secondaryActionLabel' => 'View Service Programs',
                 'secondaryActionPath' => '/services',
             ],
         ],
@@ -64,10 +64,10 @@ $demoTenantPublicBlocks = static function (?array $tenantContext = null): array 
             'type' => 'rich-text',
             'schemaVersion' => 1,
             'data' => [
-                'heading' => 'Built with tenant-safe runtime boundaries',
+                'heading' => 'Built for local trust and central reliability',
                 'paragraphs' => [
-                    'Tenant domains resolve through central registry records before frontend rendering proceeds.',
-                    'Shared platform capabilities stay isolated while tenant-specific identity and navigation remain scoped.',
+                    'Tenant domains are resolved through central registry records before public rendering begins, preventing cross-tenant ambiguity and preserving deterministic routing.',
+                    'Shared capabilities remain centralized while each tenant keeps its own identity layer, content tone, and service conversion path.',
                 ],
             ],
         ],
@@ -76,28 +76,28 @@ $demoTenantPublicBlocks = static function (?array $tenantContext = null): array 
             'type' => 'feature-grid',
             'schemaVersion' => 1,
             'data' => [
-                'heading' => 'What this seeded tenant demonstrates',
-                'intro' => 'Domain resolution, tenant runtime classification, and frontend composition contracts.',
+                'heading' => 'What this tenant surface proves',
+                'intro' => 'Every card reflects production-grade contracts behind the visual experience.',
                 'features' => [
                     [
-                        'title' => 'Central registry-backed domain routing',
-                        'description' => 'Tenant hosts are looked up through central tenant-domain metadata.',
-                        'label' => 'Tenancy',
+                        'title' => 'Registry-backed domain resolution',
+                        'description' => 'Tenant hosts are resolved using central domain metadata with explicit positive/negative caching controls.',
+                        'label' => 'Domain Layer',
                     ],
                     [
-                        'title' => 'Capability-aware navigation',
-                        'description' => 'Navigation items are filtered by tenant modules and capabilities.',
-                        'label' => 'Access',
+                        'title' => 'Capability-aware conversion pathways',
+                        'description' => 'Navigation and calls to action can be tailored by enabled modules, capabilities, and audience context.',
+                        'label' => 'Navigation',
                     ],
                     [
-                        'title' => 'Shared block rendering',
-                        'description' => 'Tenant public pages use typed blocks while preserving runtime isolation.',
+                        'title' => 'Typed cinematic content blocks',
+                        'description' => 'Public pages use typed composable blocks so creative upgrades do not break data and runtime contracts.',
                         'label' => 'Frontend',
                     ],
                     [
-                        'title' => 'Deterministic resolution cache',
-                        'description' => 'Positive and negative domain resolution cache entries are explicitly tracked.',
-                        'label' => 'Reliability',
+                        'title' => 'Operationally safe extensibility',
+                        'description' => 'Tenant-specific theming and surface behavior extend safely without scattering conditional logic throughout the codebase.',
+                        'label' => 'Operations',
                     ],
                 ],
             ],
@@ -107,9 +107,9 @@ $demoTenantPublicBlocks = static function (?array $tenantContext = null): array 
             'type' => 'cta-section',
             'schemaVersion' => 1,
             'data' => [
-                'heading' => 'Need to validate another seeded tenant domain?',
-                'description' => 'Switch to another demo tenant host and verify runtime surface, navigation, and content shell behavior.',
-                'actionLabel' => 'Open Tenant Dashboard',
+                'heading' => 'Need this level of quality on your own domain?',
+                'description' => 'WeBuildYouThrive builds tenant-ready customer websites that convert while preserving platform consistency and security boundaries.',
+                'actionLabel' => 'Open Tenant Operations Dashboard',
                 'actionPath' => '/dashboard',
             ],
         ],
@@ -127,20 +127,30 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
     ) {
         return Inertia::render('Tenant/PublicHome', [
             'blocks' => $demoTenantPublicBlocks($tenantContext),
+            'page' => [
+                'headTitle' => $tenantContext['displayName'].' | Tenant Website',
+                'title' => 'Service websites that look premium and convert with confidence',
+                'summary' => 'This tenant domain demonstrates conversion-focused storytelling, runtime safety, and multi-surface continuity from public pages into customer and operations workflows.',
+            ],
         ]);
     }
 
     return Inertia::render('Platform/Home', [
+        'page' => [
+            'headTitle' => 'WeBuildYouThrive | Cinematic Frontend + Platform Engineering',
+            'title' => 'We design websites and software experiences buyers remember and teams can maintain',
+            'summary' => 'Editorial visual confidence, conversion discipline, and production engineering rigor in one delivery partner.',
+        ],
         'blocks' => [
             [
                 'id' => 'platform-hero',
                 'type' => 'hero',
                 'schemaVersion' => 1,
                 'data' => [
-                    'eyebrow' => 'Platform + Services',
-                    'heading' => 'Delivering custom software platforms built for tenant scale',
-                    'supportingText' => 'From strategy through implementation and operations, WeBuildYouThrive helps small businesses and enterprises run secure, maintainable web systems.',
-                    'primaryActionLabel' => 'Request A Technical Discovery Session',
+                    'eyebrow' => 'Cinematic Frontend + Product Engineering',
+                    'heading' => 'Public websites, customer portals, and operational platforms designed as one cohesive system',
+                    'supportingText' => 'WeBuildYouThrive combines creative-direction-level frontend execution with tenant-safe architecture and operational software delivery.',
+                    'primaryActionLabel' => 'Schedule A Technical Discovery Session',
                     'primaryActionPath' => '/contact',
                     'secondaryActionLabel' => 'Review Service Capabilities',
                     'secondaryActionPath' => '/services',
@@ -151,10 +161,10 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                 'type' => 'rich-text',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'Implementation systems built for future growth',
+                    'heading' => 'Creative ambition without operational debt',
                     'paragraphs' => [
-                        'We build frontend architectures that support shared capabilities while preserving each tenant brand and operating model.',
-                        'Our approach keeps common functionality maintainable while still allowing controlled tenant-specific extensions where needed.',
+                        'Most agencies stop at visuals and most engineering firms stop at functional interfaces. We intentionally operate at both levels: brand-defining presentation and platform-level reliability.',
+                        'The result is a public experience that feels premium on first impression and remains maintainable across tenant variants, auth surfaces, and admin workflows.',
                     ],
                 ],
             ],
@@ -163,28 +173,28 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                 'type' => 'feature-grid',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'What clients rely on',
-                    'intro' => 'Production execution supported by architecture, quality controls, and long-term maintainability.',
+                    'heading' => 'Capabilities clients buy us for',
+                    'intro' => 'Visual impact, engineering discipline, and measurable business outcomes all shipped in the same delivery model.',
                     'features' => [
                         [
-                            'title' => 'Tenant-safe runtime contracts',
-                            'description' => 'Shared frontend and backend contracts prevent domain leakage and cross-tenant assumptions.',
+                            'title' => 'Cinematic, high-trust public frontends',
+                            'description' => 'Image-first editorial layouts, selective 3D storytelling, and polished interaction systems designed to drive qualified inquiries.',
+                            'label' => 'Acquisition',
+                        ],
+                        [
+                            'title' => 'Tenant-safe platform architecture',
+                            'description' => 'Runtime boundaries, URL contracts, and capability-aware interfaces that hold up as tenant count and feature depth increase.',
                             'label' => 'Architecture',
                         ],
                         [
-                            'title' => 'Role and capability-aware UI',
-                            'description' => 'Navigation and dashboard experiences are filtered through explicit access requirements.',
-                            'label' => 'Security',
+                            'title' => 'Composable content + design systems',
+                            'description' => 'Typed block rendering and semantic tokens allow rapid iteration without sacrificing consistency or frontend safety.',
+                            'label' => 'Design System',
                         ],
                         [
-                            'title' => 'Composable page blocks',
-                            'description' => 'Typed content blocks allow rapid iteration without losing schema safety.',
-                            'label' => 'Content',
-                        ],
-                        [
-                            'title' => 'Theming and design tokens',
-                            'description' => 'Tenant websites keep distinct brand identity while sharing the same platform core.',
-                            'label' => 'Experience',
+                            'title' => 'Long-term release reliability',
+                            'description' => 'Tested frontend contracts, explicit access controls, and implementation patterns that remain readable under pressure.',
+                            'label' => 'Operations',
                         ],
                     ],
                 ],
@@ -194,9 +204,9 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                 'type' => 'cta-section',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'Need a system that can scale with your organization?',
-                    'description' => 'We design and implement tenant-aware platforms for businesses that need reliability, security, and operational clarity.',
-                    'actionLabel' => 'Talk to our engineering team',
+                    'heading' => 'Need your website to close trust gaps before the first sales call?',
+                    'description' => 'Tell us your growth target, your system constraints, and where your current frontend loses confidence. We will map the technical and creative path to a better result.',
+                    'actionLabel' => 'Talk to Our Engineering + Design Team',
                     'actionPath' => '/contact',
                 ],
             ],
@@ -206,6 +216,11 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
 
 Route::get('/services', function () {
     return Inertia::render('Platform/Home', [
+        'page' => [
+            'headTitle' => 'Services | WeBuildYouThrive',
+            'title' => 'From cinematic public frontends to mission-critical software operations',
+            'summary' => 'Our service model spans strategy, UX architecture, implementation, quality assurance, and long-term optimization.',
+        ],
         'blocks' => [
             [
                 'id' => 'services-hero',
@@ -213,12 +228,43 @@ Route::get('/services', function () {
                 'schemaVersion' => 1,
                 'data' => [
                     'eyebrow' => 'Service Portfolio',
-                    'heading' => 'Engineering, frontend architecture, and enterprise operations support',
-                    'supportingText' => 'Our delivery model supports platform modernization, tenant-ready frontend systems, and long-term release operations.',
-                    'primaryActionLabel' => 'Book a technical planning session',
+                    'heading' => 'Creative direction, frontend craft, and platform engineering under one accountable team',
+                    'supportingText' => 'We architect and build customer acquisition surfaces, tenant experiences, and software operations systems that can scale without chaotic rewrites.',
+                    'primaryActionLabel' => 'Book A Technical Planning Session',
                     'primaryActionPath' => '/contact',
-                    'secondaryActionLabel' => 'Review supported industries',
+                    'secondaryActionLabel' => 'Review Supported Industries',
                     'secondaryActionPath' => '/industries',
+                ],
+            ],
+            [
+                'id' => 'services-grid',
+                'type' => 'feature-grid',
+                'schemaVersion' => 1,
+                'data' => [
+                    'heading' => 'Engagement tracks',
+                    'intro' => 'Choose a focused track or combine them into a full modernization program.',
+                    'features' => [
+                        [
+                            'title' => 'Cinematic Website Redesign',
+                            'description' => 'Positioning, copy architecture, visual systems, interaction polish, and conversion-oriented launch execution.',
+                            'label' => 'Brand + Conversion',
+                        ],
+                        [
+                            'title' => 'Tenant Frontend Expansion',
+                            'description' => 'Shared design system and runtime-safe tenant differentiation across public, auth, and admin surfaces.',
+                            'label' => 'Multi-Tenant',
+                        ],
+                        [
+                            'title' => 'Operational Product Engineering',
+                            'description' => 'Dispatch, CRM, billing, reporting, and role-aware internal tools aligned to real workflows.',
+                            'label' => 'Internal Software',
+                        ],
+                        [
+                            'title' => 'Quality and Delivery Hardening',
+                            'description' => 'Testing strategy, accessibility, performance budgets, and release-safe frontend contracts.',
+                            'label' => 'Reliability',
+                        ],
+                    ],
                 ],
             ],
             [
@@ -226,9 +272,9 @@ Route::get('/services', function () {
                 'type' => 'cta-section',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'Need a targeted roadmap for your platform?',
-                    'description' => 'We provide phased implementation plans and execution support tailored to your architecture and business operations.',
-                    'actionLabel' => 'Contact our team',
+                    'heading' => 'Need a targeted execution roadmap instead of another vague proposal?',
+                    'description' => 'We deliver implementation-ready architecture, interface direction, and sequencing that your team can actually execute.',
+                    'actionLabel' => 'Contact Our Team',
                     'actionPath' => '/contact',
                 ],
             ],
@@ -238,6 +284,11 @@ Route::get('/services', function () {
 
 Route::get('/industries', function () {
     return Inertia::render('Platform/Home', [
+        'page' => [
+            'headTitle' => 'Industries | WeBuildYouThrive',
+            'title' => 'Industry-specific workflows built on shared platform foundations',
+            'summary' => 'From field service operations to enterprise administrative networks, we adapt systems without duplicating architecture.',
+        ],
         'blocks' => [
             [
                 'id' => 'industries-hero',
@@ -245,9 +296,9 @@ Route::get('/industries', function () {
                 'schemaVersion' => 1,
                 'data' => [
                     'eyebrow' => 'Industry Applications',
-                    'heading' => 'Operational software for service businesses, healthcare groups, and enterprise organizations',
-                    'supportingText' => 'We adapt shared platform foundations to industry-specific workflows without tenant-name conditionals and one-off code paths.',
-                    'primaryActionLabel' => 'Discuss your industry requirements',
+                    'heading' => 'Purpose-built experiences for service businesses, healthcare organizations, and enterprise teams',
+                    'supportingText' => 'We align each implementation to real operating constraints while keeping core contracts reusable and maintainable.',
+                    'primaryActionLabel' => 'Discuss Your Industry Requirements',
                     'primaryActionPath' => '/contact',
                 ],
             ],
@@ -256,24 +307,28 @@ Route::get('/industries', function () {
                 'type' => 'feature-grid',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'Deployment patterns we support',
-                    'intro' => 'From single-location operations to nationwide organizations with thousands of users.',
+                    'heading' => 'Deployment patterns we routinely support',
+                    'intro' => 'Single-location teams, regional organizations, and nationwide operations with layered permissions and tenant boundaries.',
                     'features' => [
                         [
-                            'title' => 'Field-service dispatch operations',
-                            'description' => 'Scheduling, routing, and status visibility for service teams.',
+                            'title' => 'Field-service dispatch systems',
+                            'description' => 'Scheduling, routing, and live operational visibility designed for high-volume service teams.',
+                            'label' => 'Home Services',
                         ],
                         [
                             'title' => 'Multi-location administrative control',
-                            'description' => 'Tenant-level segmentation with role-based module access.',
+                            'description' => 'Tenant-level segmentation with role- and capability-aware access policies.',
+                            'label' => 'Franchise + Regional',
                         ],
                         [
                             'title' => 'Customer-facing portals',
-                            'description' => 'Tenant-branded experiences for requests, communication, and account management.',
+                            'description' => 'Tenant-branded request, messaging, account, and billing workflows that feel cohesive with the public website.',
+                            'label' => 'Customer Experience',
                         ],
                         [
-                            'title' => 'Dashboard-based operations',
-                            'description' => 'Capability-aware widgets for finance, customer workflows, and dispatch teams.',
+                            'title' => 'Operations and finance dashboards',
+                            'description' => 'Capability-aware widgets and controls for dispatch, customer workflows, and revenue operations.',
+                            'label' => 'Internal Tools',
                         ],
                     ],
                 ],
@@ -284,6 +339,11 @@ Route::get('/industries', function () {
 
 Route::get('/contact', function () {
     return Inertia::render('Platform/Home', [
+        'page' => [
+            'headTitle' => 'Contact | WeBuildYouThrive',
+            'title' => 'Tell us what you need to build, modernize, or stabilize',
+            'summary' => 'We respond with a clear technical discovery path that connects visual ambition to implementation reality.',
+        ],
         'blocks' => [
             [
                 'id' => 'contact-hero',
@@ -291,10 +351,12 @@ Route::get('/contact', function () {
                 'schemaVersion' => 1,
                 'data' => [
                     'eyebrow' => 'Contact',
-                    'heading' => 'Tell us what you need to build or modernize',
-                    'supportingText' => 'Share your platform goals, tenant needs, and constraints. Our team will respond with a technical discovery path.',
+                    'heading' => 'Describe the website or platform your team needs next',
+                    'supportingText' => 'Share your goals, constraints, and timeline pressure. We will respond with a scoped discovery conversation and a practical implementation path.',
                     'primaryActionLabel' => 'Email hello@webuildyouthrive.com',
                     'primaryActionPath' => 'mailto:hello@webuildyouthrive.com',
+                    'secondaryActionLabel' => 'Explore Service Tracks',
+                    'secondaryActionPath' => '/services',
                 ],
             ],
             [
@@ -302,10 +364,10 @@ Route::get('/contact', function () {
                 'type' => 'rich-text',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'What to include in your message',
+                    'heading' => 'What to include so we can move fast',
                     'paragraphs' => [
-                        'Describe the application surfaces you need: public website, tenant admin, portal, or operational dashboards.',
-                        'List security, compliance, and integration requirements so we can shape the implementation plan correctly.',
+                        'List the surfaces you need first: public website, tenant-facing portal, auth workflows, operations dashboards, or all of the above.',
+                        'Include current blockers (design quality, conversion rate, legacy code risks, delivery constraints) so we can prioritize correctly.',
                     ],
                 ],
             ],
@@ -378,6 +440,11 @@ Route::get('/tenant-site', function () use ($demoTenantFrontendContext, $demoTen
         'blocks' => $demoTenantPublicBlocks(
             request()->attributes->get('frontendTenantContext')
         ),
+        'page' => [
+            'headTitle' => 'Tenant Demo | Public Surface',
+            'title' => 'Tenant-branded public experience demo',
+            'summary' => 'A realistic tenant website surface with conversion pathways, scoped navigation, and platform-governed runtime behavior.',
+        ],
     ]);
 })->name('tenant.public.home');
 
