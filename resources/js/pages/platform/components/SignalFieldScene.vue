@@ -1,22 +1,4 @@
 <script setup lang="ts">
-import {
-    AmbientLight,
-    BufferAttribute,
-    BufferGeometry,
-    Clock,
-    Color,
-    Group,
-    IcosahedronGeometry,
-    Mesh,
-    MeshStandardMaterial,
-    PerspectiveCamera,
-    PointLight,
-    Points,
-    PointsMaterial,
-    Scene,
-    TorusKnotGeometry,
-    WebGLRenderer,
-} from "three";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 
 const containerElement = ref<HTMLElement | null>(null);
@@ -28,18 +10,38 @@ let mediaQueryList: MediaQueryList | null = null;
 let mediaQueryListener:
     | ((this: MediaQueryList, event: MediaQueryListEvent) => void)
     | null = null;
+let motionPreferenceGeneration = 0;
 
 function lerp(start: number, end: number, factor: number): number {
     return start + (end - start) * factor;
 }
 
-function mountSignalFieldScene(): (() => void) | null {
+async function mountSignalFieldScene(): Promise<(() => void) | null> {
     const container = containerElement.value;
     const canvas = canvasElement.value;
 
     if (!container || !canvas) {
         return null;
     }
+
+    const {
+        AmbientLight,
+        BufferAttribute,
+        BufferGeometry,
+        Clock,
+        Color,
+        Group,
+        IcosahedronGeometry,
+        Mesh,
+        MeshStandardMaterial,
+        PerspectiveCamera,
+        PointLight,
+        Points,
+        PointsMaterial,
+        Scene,
+        TorusKnotGeometry,
+        WebGLRenderer,
+    } = await import("three");
 
     const scene = new Scene();
     scene.background = null;
@@ -204,7 +206,9 @@ function mountSignalFieldScene(): (() => void) | null {
     };
 }
 
-function applyMotionPreference(): void {
+async function applyMotionPreference(): Promise<void> {
+    const generation = motionPreferenceGeneration + 1;
+    motionPreferenceGeneration = generation;
     const prefersReducedMotion = mediaQueryList?.matches ?? false;
     reducedMotionEnabled.value = prefersReducedMotion;
 
@@ -212,14 +216,21 @@ function applyMotionPreference(): void {
     releaseScene = null;
 
     if (!prefersReducedMotion) {
-        releaseScene = mountSignalFieldScene();
+        const nextReleaseScene = await mountSignalFieldScene();
+
+        if (generation !== motionPreferenceGeneration) {
+            nextReleaseScene?.();
+            return;
+        }
+
+        releaseScene = nextReleaseScene;
     }
 }
 
 onMounted(() => {
     mediaQueryList = window.matchMedia("(prefers-reduced-motion: reduce)");
     mediaQueryListener = () => {
-        applyMotionPreference();
+        void applyMotionPreference();
     };
 
     if (typeof mediaQueryList.addEventListener === "function") {
@@ -228,7 +239,7 @@ onMounted(() => {
         mediaQueryList.addListener(mediaQueryListener);
     }
 
-    applyMotionPreference();
+    void applyMotionPreference();
 });
 
 onBeforeUnmount(() => {
