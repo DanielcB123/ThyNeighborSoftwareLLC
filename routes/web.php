@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Onboarding\SaveOnboardingStepController;
+use App\Http\Controllers\Onboarding\ScheduleDiscoveryMeetingController;
+use App\Http\Controllers\Onboarding\StartProjectController;
+use App\Http\Controllers\Onboarding\UploadOnboardingMaterialsController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -150,8 +154,8 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                     'eyebrow' => 'Cinematic Frontend + Product Engineering',
                     'heading' => 'Public websites, customer portals, and operational platforms designed as one cohesive system',
                     'supportingText' => 'WeBuildYouThrive combines creative-direction-level frontend execution with tenant-safe architecture and operational software delivery.',
-                    'primaryActionLabel' => 'Schedule A Technical Discovery Session',
-                    'primaryActionPath' => '/contact',
+                    'primaryActionLabel' => 'Start Your Project',
+                    'primaryActionPath' => '/start-project',
                     'secondaryActionLabel' => 'Review Service Capabilities',
                     'secondaryActionPath' => '/services',
                 ],
@@ -206,8 +210,8 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                 'data' => [
                     'heading' => 'Need your website to close trust gaps before the first sales call?',
                     'description' => 'Tell us your growth target, your system constraints, and where your current frontend loses confidence. We will map the technical and creative path to a better result.',
-                    'actionLabel' => 'Talk to Our Engineering + Design Team',
-                    'actionPath' => '/contact',
+                    'actionLabel' => 'Start Your Project',
+                    'actionPath' => '/start-project',
                 ],
             ],
         ],
@@ -230,8 +234,8 @@ Route::get('/services', function () {
                     'eyebrow' => 'Service Portfolio',
                     'heading' => 'Creative direction, frontend craft, and platform engineering under one accountable team',
                     'supportingText' => 'We architect and build customer acquisition surfaces, tenant experiences, and software operations systems that can scale without chaotic rewrites.',
-                    'primaryActionLabel' => 'Book A Technical Planning Session',
-                    'primaryActionPath' => '/contact',
+                    'primaryActionLabel' => 'Start Your Project',
+                    'primaryActionPath' => '/start-project',
                     'secondaryActionLabel' => 'Review Supported Industries',
                     'secondaryActionPath' => '/industries',
                 ],
@@ -274,8 +278,8 @@ Route::get('/services', function () {
                 'data' => [
                     'heading' => 'Need a targeted execution roadmap instead of another vague proposal?',
                     'description' => 'We deliver implementation-ready architecture, interface direction, and sequencing that your team can actually execute.',
-                    'actionLabel' => 'Contact Our Team',
-                    'actionPath' => '/contact',
+                    'actionLabel' => 'Start Your Project',
+                    'actionPath' => '/start-project',
                 ],
             ],
         ],
@@ -298,8 +302,8 @@ Route::get('/industries', function () {
                     'eyebrow' => 'Industry Applications',
                     'heading' => 'Purpose-built experiences for service businesses, healthcare organizations, and enterprise teams',
                     'supportingText' => 'We align each implementation to real operating constraints while keeping core contracts reusable and maintainable.',
-                    'primaryActionLabel' => 'Discuss Your Industry Requirements',
-                    'primaryActionPath' => '/contact',
+                    'primaryActionLabel' => 'Start Your Project',
+                    'primaryActionPath' => '/start-project',
                 ],
             ],
             [
@@ -337,12 +341,21 @@ Route::get('/industries', function () {
     ]);
 })->name('platform.industries');
 
+Route::get('/start-project', StartProjectController::class)->name('platform.start-project');
+
+Route::post('/start-project/session', SaveOnboardingStepController::class)
+    ->name('platform.start-project.session.save');
+Route::post('/start-project/session/materials', UploadOnboardingMaterialsController::class)
+    ->name('platform.start-project.session.materials');
+Route::post('/start-project/session/schedule', ScheduleDiscoveryMeetingController::class)
+    ->name('platform.start-project.session.schedule');
+
 Route::get('/contact', function () {
     return Inertia::render('Platform/Home', [
         'page' => [
             'headTitle' => 'Contact | WeBuildYouThrive',
-            'title' => 'Tell us what you need to build, modernize, or stabilize',
-            'summary' => 'We respond with a clear technical discovery path that connects visual ambition to implementation reality.',
+            'title' => 'Start your project with a structured discovery intake',
+            'summary' => 'Use our guided preparation flow so we can run a focused discovery meeting around your business goals, constraints, and timeline.',
         ],
         'blocks' => [
             [
@@ -350,13 +363,13 @@ Route::get('/contact', function () {
                 'type' => 'hero',
                 'schemaVersion' => 1,
                 'data' => [
-                    'eyebrow' => 'Contact',
-                    'heading' => 'Describe the website or platform your team needs next',
-                    'supportingText' => 'Share your goals, constraints, and timeline pressure. We will respond with a scoped discovery conversation and a practical implementation path.',
-                    'primaryActionLabel' => 'Email hello@webuildyouthrive.com',
-                    'primaryActionPath' => 'mailto:hello@webuildyouthrive.com',
-                    'secondaryActionLabel' => 'Explore Service Tracks',
-                    'secondaryActionPath' => '/services',
+                    'eyebrow' => 'Project Onboarding',
+                    'heading' => 'Prepare your discovery meeting in about 5 to 10 minutes',
+                    'supportingText' => 'Share your business context, project direction, and current blockers. We will use it to prepare a practical conversation and clear next steps.',
+                    'primaryActionLabel' => 'Start Your Project',
+                    'primaryActionPath' => '/start-project',
+                    'secondaryActionLabel' => 'Email hello@webuildyouthrive.com',
+                    'secondaryActionPath' => 'mailto:hello@webuildyouthrive.com',
                 ],
             ],
             [
@@ -364,10 +377,10 @@ Route::get('/contact', function () {
                 'type' => 'rich-text',
                 'schemaVersion' => 1,
                 'data' => [
-                    'heading' => 'What to include so we can move fast',
+                    'heading' => 'Email still works if you need it',
                     'paragraphs' => [
-                        'List the surfaces you need first: public website, tenant-facing portal, auth workflows, operations dashboards, or all of the above.',
-                        'Include current blockers (design quality, conversion rate, legacy code risks, delivery constraints) so we can prioritize correctly.',
+                        'The onboarding flow is the primary way to start. It gives you an immediate workspace and lets us prepare the meeting without forcing you to define full technical specifications.',
+                        'If your request is unusual, you can still reach us directly at hello@webuildyouthrive.com.',
                     ],
                 ],
             ],
