@@ -75,7 +75,7 @@ units:
     phase: phase_1_to_3
     type: test
     path: tests/Feature/Onboarding/StartProjectOnboardingTest.php
-    status: in_progress
+    status: blocked
     dependencies: [start-project-workflow-service]
     tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
-    notes: "Assertions updated for lead/discovery central records; awaiting full test run verification."
+    notes: "Assertions updated; runtime lacks PHP binary so automated execution is currently blocked."

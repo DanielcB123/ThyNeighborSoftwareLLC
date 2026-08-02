@@ -30,9 +30,12 @@
 
 ### In progress
 
-- Execute migrations/tests and resolve integration failures.
-- Finalize manifest statuses after verification.
+- Resolve environment/runtime blocker and execute migrations/tests.
 
 ### Pending
 
 - Expand automated coverage beyond start-project flow for additional Phase 2/3 entities (messaging, clarification, review assessment).
+
+## Current blocker
+
+- `php` executable is unavailable in this cloud runtime (`php: command not found`), so `php artisan test tests/Feature/Onboarding/StartProjectOnboardingTest.php` could not be executed.
