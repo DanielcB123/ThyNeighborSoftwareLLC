@@ -1,0 +1,81 @@
+units:
+  - name: phase-0-existing-system-audit
+    phase: phase_0
+    type: documentation
+    path: docs/onboarding/phase-0-existing-system-audit.md
+    status: implemented
+    dependencies: []
+    tests: []
+    notes: "Existing central and tenant entities were audited for onboarding overlap."
+
+  - name: phase-0-adr-set
+    phase: phase_0
+    type: architecture_decision_record
+    path: docs/architecture/decisions/ADR-ONB-001-prospect-versus-tenant-identity.md
+    status: implemented
+    dependencies: [phase-0-existing-system-audit]
+    tests: []
+    notes: "ADR set 001 through 009 defines pre-client onboarding boundaries and persistence strategy."
+
+  - name: central-onboarding-phase-schema
+    phase: phase_1_to_3
+    type: migration
+    path: database/migrations/2026_08_02_015000_create_onboarding_phase_tables.php
+    status: implemented
+    dependencies: [phase-0-existing-system-audit]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "Introduces canonical central-database entities for inquiry, lead, workspace, and discovery."
+
+  - name: lead-and-workspace-enums
+    phase: phase_1_to_3
+    type: enum
+    path: app/Enums/Onboarding
+    status: implemented
+    dependencies: [central-onboarding-phase-schema]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "String-backed enums established for intake status, lead status, workspace status, and discovery status."
+
+  - name: start-project-workflow-service
+    phase: phase_1_to_3
+    type: domain_service
+    path: app/Onboarding/Services/ProspectOnboardingService.php
+    status: implemented
+    dependencies: [central-onboarding-phase-schema, lead-and-workspace-enums]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "Public intake now provisions inquiry, lead, workspace, session, response revision history, and meeting task."
+
+  - name: onboarding-http-contracts
+    phase: phase_1_to_3
+    type: http_validation
+    path: app/Http/Requests/Onboarding
+    status: implemented
+    dependencies: [central-onboarding-phase-schema]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "Request validators now enforce discovery_session token existence on central tables."
+
+  - name: onboarding-central-models
+    phase: phase_1_to_3
+    type: model
+    path: app/Models/Central
+    status: implemented
+    dependencies: [central-onboarding-phase-schema]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "Central models map lead/workspace/discovery records and relationships."
+
+  - name: onboarding-seed-baseline
+    phase: phase_3
+    type: seeder
+    path: database/seeders/Central/OnboardingSeeder.php
+    status: implemented
+    dependencies: [central-onboarding-phase-schema]
+    tests: []
+    notes: "Seeds default lead source and published discovery template version with section/question definitions."
+
+  - name: onboarding-feature-tests
+    phase: phase_1_to_3
+    type: test
+    path: tests/Feature/Onboarding/StartProjectOnboardingTest.php
+    status: in_progress
+    dependencies: [start-project-workflow-service]
+    tests: [tests/Feature/Onboarding/StartProjectOnboardingTest.php]
+    notes: "Assertions updated for lead/discovery central records; awaiting full test run verification."

@@ -6,6 +6,7 @@ namespace App\Models\Central;
 
 use App\Shared\Database\CentralModel;
 use App\Shared\Database\Concerns\HasPublicId;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -13,24 +14,30 @@ class Prospect extends CentralModel
 {
     use HasPublicId;
 
+    protected $table = 'leads';
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'public_id',
-        'intake_status',
+        'inquiry_submission_id',
+        'status',
+        'priority',
+        'business_stage',
         'project_direction',
         'business_name',
-        'business_email',
-        'business_phone',
+        'primary_email',
+        'primary_phone',
         'industry',
         'industry_other',
         'business_location',
         'location_count',
-        'team_size',
+        'employee_range',
         'primary_contact_name',
         'primary_contact_role',
-        'completed_at',
+        'converted_to_workspace_at',
+        'discovery_completed_at',
     ];
 
     /**
@@ -40,8 +47,17 @@ class Prospect extends CentralModel
     {
         return [
             'location_count' => 'integer',
-            'completed_at' => 'datetime',
+            'converted_to_workspace_at' => 'datetime',
+            'discovery_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<InquirySubmission, $this>
+     */
+    public function inquirySubmission(): BelongsTo
+    {
+        return $this->belongsTo(InquirySubmission::class);
     }
 
     /**
@@ -49,7 +65,7 @@ class Prospect extends CentralModel
      */
     public function contacts(): HasMany
     {
-        return $this->hasMany(ProspectContact::class);
+        return $this->hasMany(ProspectContact::class, 'lead_id');
     }
 
     /**
@@ -57,7 +73,16 @@ class Prospect extends CentralModel
      */
     public function onboardingSessions(): HasMany
     {
-        return $this->hasMany(OnboardingSession::class);
+        return $this->hasMany(OnboardingSession::class, 'lead_id');
+    }
+
+    /**
+     * @return HasOne<ProspectWorkspace, $this>
+     */
+    public function activeWorkspace(): HasOne
+    {
+        return $this->hasOne(ProspectWorkspace::class, 'lead_id')
+            ->where('active_workspace_key', 1);
     }
 
     /**
@@ -65,30 +90,7 @@ class Prospect extends CentralModel
      */
     public function discoveryMeeting(): HasOne
     {
-        return $this->hasOne(DiscoveryMeeting::class);
+        return $this->hasOne(DiscoveryMeeting::class, 'lead_id');
     }
 
-    /**
-     * @return HasMany<ProjectRequirement, $this>
-     */
-    public function requirements(): HasMany
-    {
-        return $this->hasMany(ProjectRequirement::class);
-    }
-
-    /**
-     * @return HasMany<ProposedDeliverable, $this>
-     */
-    public function proposedDeliverables(): HasMany
-    {
-        return $this->hasMany(ProposedDeliverable::class);
-    }
-
-    /**
-     * @return HasMany<ClientReview, $this>
-     */
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(ClientReview::class);
-    }
 }

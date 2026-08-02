@@ -14,12 +14,16 @@ class OnboardingSession extends CentralModel
 {
     use HasPublicId;
 
+    protected $table = 'discovery_sessions';
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'public_id',
-        'prospect_id',
+        'prospect_workspace_id',
+        'lead_id',
+        'discovery_template_version_id',
         'access_token',
         'status',
         'current_step',
@@ -46,7 +50,15 @@ class OnboardingSession extends CentralModel
      */
     public function prospect(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class);
+        return $this->belongsTo(Prospect::class, 'lead_id');
+    }
+
+    /**
+     * @return BelongsTo<ProspectWorkspace, $this>
+     */
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(ProspectWorkspace::class, 'prospect_workspace_id');
     }
 
     /**
@@ -54,7 +66,7 @@ class OnboardingSession extends CentralModel
      */
     public function responses(): HasMany
     {
-        return $this->hasMany(OnboardingResponse::class);
+        return $this->hasMany(OnboardingResponse::class, 'discovery_session_id');
     }
 
     /**
@@ -62,6 +74,6 @@ class OnboardingSession extends CentralModel
      */
     public function discoveryMeeting(): HasOne
     {
-        return $this->hasOne(DiscoveryMeeting::class);
+        return $this->hasOne(DiscoveryMeeting::class, 'discovery_session_id');
     }
 }

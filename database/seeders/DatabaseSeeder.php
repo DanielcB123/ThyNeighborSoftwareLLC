@@ -6,6 +6,7 @@ use Database\Seeders\Central\DemoTenantRegistrySeeder;
 use Database\Seeders\Central\DemoTenantDatasetSeeder;
 use Database\Seeders\Central\FeatureSeeder;
 use Database\Seeders\Central\ModuleSeeder;
+use Database\Seeders\Central\OnboardingSeeder;
 use Database\Seeders\Central\PlanSeeder;
 use Database\Seeders\Central\PlatformPermissionSeeder;
 use Database\Seeders\Central\PlatformRoleSeeder;
@@ -29,6 +30,7 @@ class DatabaseSeeder extends Seeder
             ModuleSeeder::class,
             PlanSeeder::class,
             PlatformUserSeeder::class,
+            OnboardingSeeder::class,
             DemoTenantRegistrySeeder::class,
             DemoTenantDatasetSeeder::class,
         ]);

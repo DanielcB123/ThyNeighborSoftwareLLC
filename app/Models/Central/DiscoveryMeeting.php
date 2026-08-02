@@ -13,13 +13,20 @@ class DiscoveryMeeting extends CentralModel
 {
     use HasPublicId;
 
+    protected $table = 'prospect_workspace_tasks';
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'public_id',
-        'prospect_id',
-        'onboarding_session_id',
+        'prospect_workspace_id',
+        'discovery_session_id',
+        'lead_id',
+        'task_type',
+        'title',
+        'description',
+        'task_payload',
         'status',
         'meeting_format',
         'timezone',
@@ -37,6 +44,7 @@ class DiscoveryMeeting extends CentralModel
     protected function casts(): array
     {
         return [
+            'task_payload' => 'array',
             'preferred_start_date' => 'date',
             'preferred_end_date' => 'date',
             'scheduled_for' => 'datetime',
@@ -49,7 +57,7 @@ class DiscoveryMeeting extends CentralModel
      */
     public function prospect(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class);
+        return $this->belongsTo(Prospect::class, 'lead_id');
     }
 
     /**
@@ -57,7 +65,7 @@ class DiscoveryMeeting extends CentralModel
      */
     public function onboardingSession(): BelongsTo
     {
-        return $this->belongsTo(OnboardingSession::class);
+        return $this->belongsTo(OnboardingSession::class, 'discovery_session_id');
     }
 
     /**

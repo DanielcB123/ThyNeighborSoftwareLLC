@@ -8,26 +8,26 @@ use App\Shared\Database\CentralModel;
 use App\Shared\Database\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ProspectContact extends CentralModel
+class ProspectWorkspaceMember extends CentralModel
 {
     use HasPublicId;
 
-    protected $table = 'lead_contacts';
+    protected $table = 'prospect_workspace_members';
 
     /**
      * @var list<string>
      */
     protected $fillable = [
         'public_id',
-        'lead_id',
+        'prospect_workspace_id',
+        'invited_by_user_id',
+        'role',
+        'access_scope',
+        'status',
         'name',
         'email',
         'normalized_email',
-        'phone',
-        'role',
-        'contact_method',
-        'is_primary',
-        'invite_later',
+        'last_seen_at',
     ];
 
     /**
@@ -36,16 +36,15 @@ class ProspectContact extends CentralModel
     protected function casts(): array
     {
         return [
-            'is_primary' => 'boolean',
-            'invite_later' => 'boolean',
+            'last_seen_at' => 'datetime',
         ];
     }
 
     /**
-     * @return BelongsTo<Prospect, $this>
+     * @return BelongsTo<ProspectWorkspace, $this>
      */
-    public function prospect(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class, 'lead_id');
+        return $this->belongsTo(ProspectWorkspace::class, 'prospect_workspace_id');
     }
 }

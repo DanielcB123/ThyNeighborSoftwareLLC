@@ -4,7 +4,21 @@ declare(strict_types=1);
 
 namespace App\Onboarding\Services;
 
+use App\Enums\Onboarding\DiscoverySessionStatus;
+use App\Enums\Onboarding\InquirySpamDisposition;
+use App\Enums\Onboarding\InquirySubmissionStatus;
+use App\Enums\Onboarding\LeadPriority;
+use App\Enums\Onboarding\LeadStatus;
+use App\Enums\Onboarding\ProspectTaskStatus;
+use App\Enums\Onboarding\ProspectTaskType;
+use App\Enums\Onboarding\ProspectWorkspaceAccessScope;
+use App\Enums\Onboarding\ProspectWorkspaceMemberRole;
+use App\Enums\Onboarding\ProspectWorkspaceMemberStatus;
+use App\Enums\Onboarding\ProspectWorkspaceStatus;
 use App\Models\Central\DiscoveryMeeting;
+use App\Models\Central\InquirySubmission;
+use App\Models\Central\LeadProjectInterest;
+use App\Models\Central\LeadSource;
 use App\Models\Central\OnboardingResponse;
 use App\Models\Central\OnboardingSession;
 use App\Models\Central\Prospect;
@@ -171,7 +185,7 @@ class ProspectOnboardingService
         if (is_string($accessToken) && trim($accessToken) !== '') {
             $existing = OnboardingSession::query()
                 ->where('access_token', trim($accessToken))
-                ->with(['prospect.contacts', 'responses', 'discoveryMeeting'])
+                ->with(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
                 ->first();
 
             if ($existing !== null) {
@@ -180,20 +194,48 @@ class ProspectOnboardingService
         }
 
         return DB::transaction(function () use ($ipAddress, $userAgent): OnboardingSession {
+            $source = LeadSource::query()->firstOrCreate(
+                ['slug' => 'website-start-project'],
+                [
+                    'name' => 'Website start-project form',
+                    'status' => 'active',
+                    'description' => 'Primary public inquiry intake through /start-project.',
+                ]
+            );
+
+            $inquiry = InquirySubmission::query()->create([
+                'lead_source_id' => $source->id,
+                'status' => InquirySubmissionStatus::Submitted->value,
+                'spam_disposition' => InquirySpamDisposition::NotChecked->value,
+                'context' => ['entryPoint' => '/start-project'],
+                'submitted_at' => now(),
+            ]);
+
             $prospect = Prospect::query()->create([
-                'intake_status' => 'in_progress',
+                'inquiry_submission_id' => $inquiry->id,
+                'status' => LeadStatus::New->value,
+                'priority' => LeadPriority::Normal->value,
+            ]);
+
+            $workspace = $prospect->activeWorkspace()->create([
+                'status' => ProspectWorkspaceStatus::Active->value,
+                'access_scope' => ProspectWorkspaceAccessScope::InvitedOnly->value,
+                'active_workspace_key' => 1,
+                'workspace_name' => 'Project Discovery Workspace',
+                'opened_at' => now(),
             ]);
 
             $session = OnboardingSession::query()->create([
-                'prospect_id' => $prospect->id,
+                'lead_id' => $prospect->id,
+                'prospect_workspace_id' => $workspace->id,
                 'access_token' => Str::random(64),
-                'status' => 'in_progress',
+                'status' => DiscoverySessionStatus::InProgress->value,
                 'current_step' => 1,
                 'last_activity_ip' => $ipAddress,
                 'last_activity_user_agent' => $userAgent,
             ]);
 
-            return $session->load(['prospect.contacts', 'responses', 'discoveryMeeting']);
+            return $session->load(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
         });
     }
 
@@ -201,7 +243,7 @@ class ProspectOnboardingService
     {
         $session = OnboardingSession::query()
             ->where('access_token', $accessToken)
-            ->with(['prospect.contacts', 'responses', 'discoveryMeeting'])
+            ->with(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
             ->first();
 
         if ($session === null) {
@@ -227,7 +269,7 @@ class ProspectOnboardingService
             throw new \InvalidArgumentException('Unknown onboarding step key provided.');
         }
 
-        $session->loadMissing(['prospect.contacts', 'responses', 'discoveryMeeting']);
+        $session->loadMissing(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
 
         DB::transaction(function () use (
             $session,
@@ -236,13 +278,30 @@ class ProspectOnboardingService
             $ipAddress,
             $userAgent
         ): void {
-            $session->responses()->updateOrCreate(
-                ['step_key' => $normalizedStepKey],
+            $response = $session->responses()->updateOrCreate(
+                [
+                    'question_key' => $normalizedStepKey,
+                    'current_response_key' => 1,
+                ],
                 [
                     'response_payload' => $payload,
                     'completed_at' => now(),
                 ]
             );
+
+            $revisionNumber = (int) DB::table('discovery_response_revisions')
+                ->where('discovery_response_id', $response->id)
+                ->max('revision_number');
+
+            DB::table('discovery_response_revisions')->insert([
+                'public_id' => (string) Str::ulid(),
+                'discovery_response_id' => $response->id,
+                'revision_number' => $revisionNumber + 1,
+                'response_payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+                'changed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             $stepNumber = $this->stepNumberForKey($normalizedStepKey);
 
@@ -256,7 +315,7 @@ class ProspectOnboardingService
             $this->syncProspectFromStep($session, $normalizedStepKey, $payload);
         });
 
-        return $session->fresh(['prospect.contacts', 'responses', 'discoveryMeeting']);
+        return $session->fresh(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
     }
 
     /**
@@ -275,30 +334,44 @@ class ProspectOnboardingService
             $prospect = $session->prospect;
 
             $meeting = DiscoveryMeeting::query()->updateOrCreate(
-                ['onboarding_session_id' => $session->id],
+                ['discovery_session_id' => $session->id],
                 [
-                    'prospect_id' => $prospect->id,
-                    'status' => 'requested',
+                    'prospect_workspace_id' => $session->prospect_workspace_id,
+                    'lead_id' => $prospect->id,
+                    'task_type' => ProspectTaskType::DiscoveryMeeting->value,
+                    'status' => ProspectTaskStatus::Requested->value,
+                    'title' => 'Discovery meeting requested',
+                    'description' => 'Prospect requested scheduling from onboarding flow.',
                     'meeting_format' => (string) Arr::get($payload, 'meetingFormat', 'video'),
                     'timezone' => (string) Arr::get($payload, 'timezone', 'UTC'),
                     'preferred_start_date' => Arr::get($payload, 'preferredStartDate'),
                     'preferred_end_date' => Arr::get($payload, 'preferredEndDate'),
                     'availability_notes' => Arr::get($payload, 'availabilityNotes'),
                     'duration_minutes' => 45,
+                    'task_payload' => [
+                        'attendees' => Arr::wrap(Arr::get($payload, 'attendees', [])),
+                    ],
                 ]
             );
 
             $session->forceFill([
-                'status' => 'meeting_requested',
+                'status' => DiscoverySessionStatus::DiscoveryComplete->value,
                 'current_step' => 5,
                 'last_saved_at' => now(),
                 'completed_at' => now(),
             ])->save();
 
             $prospect->forceFill([
-                'intake_status' => 'meeting_requested',
-                'completed_at' => now(),
+                'status' => LeadStatus::DiscoveryComplete->value,
+                'discovery_completed_at' => now(),
             ])->save();
+
+            if ($session->workspace !== null) {
+                $session->workspace->update([
+                    'status' => ProspectWorkspaceStatus::DiscoveryComplete->value,
+                    'discovery_completed_at' => now(),
+                ]);
+            }
 
             return $meeting;
         });
@@ -336,7 +409,7 @@ class ProspectOnboardingService
         }
 
         $preparationResponse = $session->responses()
-            ->where('step_key', 'preparation')
+            ->where('question_key', 'preparation')
             ->first();
 
         /** @var array<string, mixed> $payload */
@@ -442,9 +515,21 @@ class ProspectOnboardingService
         $prospect = $session->prospect;
 
         if ($stepKey === 'project') {
+            $projectDirection = Arr::get($payload, 'projectDirection');
+
             $prospect->forceFill([
-                'project_direction' => Arr::get($payload, 'projectDirection'),
+                'project_direction' => $projectDirection,
             ])->save();
+
+            if (is_string($projectDirection) && $projectDirection !== '') {
+                LeadProjectInterest::query()->updateOrCreate(
+                    [
+                        'lead_id' => $prospect->id,
+                        'project_type' => $projectDirection,
+                    ],
+                    ['summary' => Arr::get($payload, 'projectDirectionNotes')]
+                );
+            }
 
             return;
         }
@@ -453,29 +538,57 @@ class ProspectOnboardingService
             return;
         }
 
+        $businessEmail = (string) Arr::get($payload, 'businessEmail', '');
+
         $prospect->forceFill([
             'primary_contact_name' => Arr::get($payload, 'contactName'),
             'primary_contact_role' => Arr::get($payload, 'roleInBusiness'),
             'business_name' => Arr::get($payload, 'businessName'),
-            'business_email' => Arr::get($payload, 'businessEmail'),
-            'business_phone' => Arr::get($payload, 'phone'),
+            'primary_email' => $businessEmail !== '' ? $businessEmail : null,
+            'normalized_primary_email' => $this->normalizeEmail($businessEmail),
+            'primary_phone' => Arr::get($payload, 'phone'),
             'industry' => Arr::get($payload, 'industry'),
             'industry_other' => Arr::get($payload, 'industryOther'),
             'business_location' => Arr::get($payload, 'businessLocation'),
             'location_count' => Arr::get($payload, 'locationCount'),
-            'team_size' => Arr::get($payload, 'teamSize'),
+            'employee_range' => Arr::get($payload, 'teamSize'),
         ])->save();
+
+        $prospect->inquirySubmission?->update([
+            'contact_name' => Arr::get($payload, 'contactName'),
+            'business_name' => Arr::get($payload, 'businessName'),
+            'email' => $businessEmail !== '' ? $businessEmail : null,
+            'normalized_email' => $this->normalizeEmail($businessEmail),
+            'phone' => Arr::get($payload, 'phone'),
+            'status' => InquirySubmissionStatus::Reviewed->value,
+            'submitted_at' => now(),
+        ]);
 
         $prospect->contacts()->delete();
 
         $prospect->contacts()->create([
             'name' => Arr::get($payload, 'contactName'),
-            'email' => Arr::get($payload, 'businessEmail'),
+            'email' => $businessEmail !== '' ? $businessEmail : null,
+            'normalized_email' => $this->normalizeEmail($businessEmail),
             'phone' => Arr::get($payload, 'phone'),
             'role' => Arr::get($payload, 'roleInBusiness'),
+            'contact_method' => 'email',
             'is_primary' => true,
             'invite_later' => false,
         ]);
+
+        if ($session->workspace !== null) {
+            $session->workspace->members()->updateOrCreate(
+                ['normalized_email' => $this->normalizeEmail($businessEmail)],
+                [
+                    'role' => ProspectWorkspaceMemberRole::Owner->value,
+                    'access_scope' => ProspectWorkspaceAccessScope::Full->value,
+                    'status' => ProspectWorkspaceMemberStatus::Active->value,
+                    'name' => (string) Arr::get($payload, 'contactName', 'Workspace Owner'),
+                    'email' => $businessEmail !== '' ? $businessEmail : 'pending@example.invalid',
+                ]
+            );
+        }
 
         /** @var array<int, array<string, mixed>> $stakeholders */
         $stakeholders = Arr::wrap(Arr::get($payload, 'additionalStakeholders', []));
@@ -492,11 +605,31 @@ class ProspectOnboardingService
             $prospect->contacts()->create([
                 'name' => $name !== '' ? $name : 'Additional Stakeholder',
                 'email' => $email !== '' ? $email : null,
+                'normalized_email' => $this->normalizeEmail($email),
                 'role' => $role !== '' ? $role : null,
+                'contact_method' => 'email',
                 'is_primary' => false,
                 'invite_later' => (bool) Arr::get($stakeholder, 'inviteLater', false),
             ]);
+
+            if ($session->workspace !== null && $email !== '') {
+                $session->workspace->members()->updateOrCreate(
+                    ['normalized_email' => $this->normalizeEmail($email)],
+                    [
+                        'role' => ProspectWorkspaceMemberRole::Collaborator->value,
+                        'access_scope' => ProspectWorkspaceAccessScope::Limited->value,
+                        'status' => ProspectWorkspaceMemberStatus::Invited->value,
+                        'name' => $name !== '' ? $name : 'Stakeholder',
+                        'email' => $email,
+                    ]
+                );
+            }
         }
+
+        $prospect->forceFill([
+            'status' => LeadStatus::WorkspaceActive->value,
+            'converted_to_workspace_at' => now(),
+        ])->save();
     }
 
     private function stepNumberForKey(string $stepKey): int
@@ -508,5 +641,16 @@ class ProspectOnboardingService
         }
 
         return $position + 1;
+    }
+
+    private function normalizeEmail(?string $email): ?string
+    {
+        if (! is_string($email)) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($email));
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

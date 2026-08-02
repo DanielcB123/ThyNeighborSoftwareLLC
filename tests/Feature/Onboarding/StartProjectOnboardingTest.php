@@ -68,23 +68,23 @@ class StartProjectOnboardingTest extends TestCase
             ->where('access_token', $sessionToken)
             ->firstOrFail();
 
-        $this->assertDatabaseHas('prospects', [
-            'id' => $session->prospect_id,
+        $this->assertDatabaseHas('leads', [
+            'id' => $session->lead_id,
             'business_name' => 'Harper Wellness Group',
-            'business_email' => 'alyssa@example.com',
+            'primary_email' => 'alyssa@example.com',
             'industry' => 'Healthcare',
             'location_count' => 3,
             'primary_contact_name' => 'Alyssa Harper',
         ]);
 
-        $this->assertDatabaseHas('prospect_contacts', [
-            'prospect_id' => $session->prospect_id,
+        $this->assertDatabaseHas('lead_contacts', [
+            'lead_id' => $session->lead_id,
             'name' => 'Alyssa Harper',
             'is_primary' => true,
         ]);
 
-        $this->assertDatabaseHas('prospect_contacts', [
-            'prospect_id' => $session->prospect_id,
+        $this->assertDatabaseHas('lead_contacts', [
+            'lead_id' => $session->lead_id,
             'name' => 'Jordan Operations',
             'invite_later' => true,
         ]);
@@ -120,7 +120,7 @@ class StartProjectOnboardingTest extends TestCase
         $this->assertSame('America/Chicago', $meeting->timezone);
 
         $session = OnboardingSession::query()->where('access_token', $sessionToken)->firstOrFail();
-        $this->assertSame('meeting_requested', $session->status);
+        $this->assertSame('discovery_complete', $session->status);
         $this->assertNotNull($session->completed_at);
     }
 

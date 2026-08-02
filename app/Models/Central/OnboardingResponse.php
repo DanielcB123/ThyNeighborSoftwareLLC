@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace App\Models\Central;
 
 use App\Shared\Database\CentralModel;
+use App\Shared\Database\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OnboardingResponse extends CentralModel
 {
+    use HasPublicId;
+
+    protected $table = 'discovery_responses';
+
     /**
      * @var list<string>
      */
     protected $fillable = [
-        'onboarding_session_id',
-        'step_key',
+        'public_id',
+        'discovery_session_id',
+        'question_key',
         'response_payload',
+        'current_response_key',
         'completed_at',
     ];
 
@@ -26,8 +33,14 @@ class OnboardingResponse extends CentralModel
     {
         return [
             'response_payload' => 'array',
+            'current_response_key' => 'integer',
             'completed_at' => 'datetime',
         ];
+    }
+
+    public function getStepKeyAttribute(): string
+    {
+        return (string) $this->question_key;
     }
 
     /**
@@ -35,6 +48,6 @@ class OnboardingResponse extends CentralModel
      */
     public function session(): BelongsTo
     {
-        return $this->belongsTo(OnboardingSession::class, 'onboarding_session_id');
+        return $this->belongsTo(OnboardingSession::class, 'discovery_session_id');
     }
 }
