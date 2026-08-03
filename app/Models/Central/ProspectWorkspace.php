@@ -42,11 +42,11 @@ class ProspectWorkspace extends CentralModel
     }
 
     /**
-     * @return BelongsTo<Prospect, $this>
+     * @return BelongsTo<Lead, $this>
      */
     public function lead(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class, 'lead_id');
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     /**

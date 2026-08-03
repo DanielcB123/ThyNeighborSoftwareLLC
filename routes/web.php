@@ -344,10 +344,13 @@ Route::get('/industries', function () {
 Route::get('/start-project', StartProjectController::class)->name('platform.start-project');
 
 Route::post('/start-project/session', SaveOnboardingStepController::class)
+    ->middleware('throttle:40,1')
     ->name('platform.start-project.session.save');
 Route::post('/start-project/session/materials', UploadOnboardingMaterialsController::class)
+    ->middleware('throttle:20,1')
     ->name('platform.start-project.session.materials');
 Route::post('/start-project/session/schedule', ScheduleDiscoveryMeetingController::class)
+    ->middleware('throttle:15,1')
     ->name('platform.start-project.session.schedule');
 
 Route::get('/contact', function () {

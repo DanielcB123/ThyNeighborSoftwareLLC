@@ -20,7 +20,7 @@ class ScheduleDiscoveryMeetingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sessionToken' => ['required', 'string', 'max:80', 'exists:discovery_sessions,access_token'],
+            'sessionToken' => ['required', 'string', 'regex:/^[A-Za-z0-9]{64}$/'],
             'payload' => ['required', 'array'],
             'payload.meetingFormat' => ['required', Rule::in(['video', 'phone', 'in-person'])],
             'payload.timezone' => ['required', 'timezone'],

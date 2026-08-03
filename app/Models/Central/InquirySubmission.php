@@ -54,10 +54,10 @@ class InquirySubmission extends CentralModel
     }
 
     /**
-     * @return HasOne<Prospect, $this>
+     * @return HasOne<Lead, $this>
      */
     public function lead(): HasOne
     {
-        return $this->hasOne(Prospect::class, 'inquiry_submission_id');
+        return $this->hasOne(Lead::class, 'inquiry_submission_id');
     }
 }

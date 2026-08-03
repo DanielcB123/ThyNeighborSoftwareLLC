@@ -42,10 +42,20 @@ class ProspectContact extends CentralModel
     }
 
     /**
-     * @return BelongsTo<Prospect, $this>
+     * @return BelongsTo<Lead, $this>
+     */
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
+    }
+
+    /**
+     * @deprecated Prefer {@see self::lead()}.
+     *
+     * @return BelongsTo<Lead, $this>
      */
     public function prospect(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class, 'lead_id');
+        return $this->lead();
     }
 }

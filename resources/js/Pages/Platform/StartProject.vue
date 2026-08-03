@@ -3,6 +3,10 @@ import axios from "axios";
 import { Head } from "@inertiajs/vue3";
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import SurfaceShell from "@/layouts/shells/SurfaceShell.vue";
+import {
+    isClientEditableOnboardingStatus,
+    type OnboardingSessionStatus,
+} from "@/types/onboarding-status";
 
 type StepKey = "project" | "business" | "goals" | "preparation" | "meeting";
 
@@ -16,10 +20,20 @@ interface OnboardingSnapshot {
     sessionToken: string;
     workspacePublicId: string;
     resumeUrl: string;
-    status: string;
+    meetingRequestPublicId: string | null;
+    status: OnboardingSessionStatus | string;
     currentStep: number;
     lastSavedAt: string | null;
     responses: Record<string, Record<string, unknown>>;
+    capabilities: OnboardingCapabilities;
+}
+
+interface OnboardingCapabilities {
+    canEdit: boolean;
+    canRequestMeeting: boolean;
+    requiredMeetingSteps: string[];
+    completedSteps: string[];
+    availableStatusTransitions: string[];
 }
 
 interface ProjectDirectionOption {
@@ -100,7 +114,7 @@ const pageSummary = computed(
         "Give us the short version. We use this to prepare for a focused discovery meeting.",
 );
 
-const session = ref<OnboardingSnapshot>({ ...props.onboarding });
+const session = ref<OnboardingSnapshot>(normalizeSessionSnapshot(props.onboarding));
 const activeStep = ref(Math.min(Math.max(session.value.currentStep, 1), 5));
 const saveState = ref<"saved" | "saving" | "unsaved" | "error">("saved");
 const saveMessage = computed(() => {
@@ -120,7 +134,7 @@ const validationErrors = ref<Record<string, string[]>>({});
 const uploadError = ref<string | null>(null);
 const isUploadingMaterials = ref(false);
 const isSubmittingMeeting = ref(false);
-const meetingPublicId = ref<string | null>(null);
+const meetingPublicId = ref<string | null>(session.value.meetingRequestPublicId);
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 const responses = session.value.responses ?? {};
@@ -199,8 +213,10 @@ const form = reactive({
 
 const resumeUrl = computed(() => session.value.resumeUrl);
 const isMeetingRequested = computed(
-    () => session.value.status === "meeting_requested" || meetingPublicId.value !== null,
+    () => !session.value.capabilities.canEdit || meetingPublicId.value !== null,
 );
+const canEditSession = computed(() => session.value.capabilities.canEdit);
+const canRequestMeeting = computed(() => session.value.capabilities.canRequestMeeting);
 const completionStep = computed(() => Math.max(activeStep.value, session.value.currentStep));
 
 watch(
@@ -247,11 +263,32 @@ function stepKeyFor(stepNumber: number): StepKey {
 }
 
 function setSessionSnapshot(snapshot: OnboardingSnapshot): void {
-    session.value = { ...snapshot };
+    session.value = normalizeSessionSnapshot(snapshot);
+    meetingPublicId.value =
+        meetingPublicId.value ?? session.value.meetingRequestPublicId;
+}
+
+function normalizeSessionSnapshot(snapshot: OnboardingSnapshot): OnboardingSnapshot {
+    const canEdit =
+        snapshot.capabilities?.canEdit ??
+        isClientEditableOnboardingStatus(snapshot.status);
+
+    return {
+        ...snapshot,
+        meetingRequestPublicId: snapshot.meetingRequestPublicId ?? null,
+        capabilities: {
+            canEdit,
+            canRequestMeeting: snapshot.capabilities?.canRequestMeeting ?? false,
+            requiredMeetingSteps: snapshot.capabilities?.requiredMeetingSteps ?? [],
+            completedSteps: snapshot.capabilities?.completedSteps ?? [],
+            availableStatusTransitions:
+                snapshot.capabilities?.availableStatusTransitions ?? [],
+        },
+    };
 }
 
 function queueAutosave(): void {
-    if (isMeetingRequested.value) {
+    if (!canEditSession.value) {
         return;
     }
 
@@ -366,6 +403,10 @@ async function saveCurrentStep(userTriggered: boolean): Promise<boolean> {
 }
 
 async function nextStep(): Promise<void> {
+    if (!canEditSession.value) {
+        return;
+    }
+
     const saved = await saveCurrentStep(true);
     if (!saved) {
         return;
@@ -482,6 +523,11 @@ async function uploadMaterials(event: Event): Promise<void> {
 }
 
 async function requestDiscoveryMeeting(): Promise<void> {
+    if (!canRequestMeeting.value) {
+        saveState.value = "error";
+        return;
+    }
+
     isSubmittingMeeting.value = true;
 
     try {
@@ -1179,10 +1225,16 @@ onBeforeUnmount(() => {
                     v-else
                     type="button"
                     class="wb-button wb-button--primary"
-                    :disabled="isSubmittingMeeting"
+                    :disabled="isSubmittingMeeting || !canRequestMeeting"
                     @click="requestDiscoveryMeeting"
                 >
-                    {{ isSubmittingMeeting ? "Submitting…" : "Request Discovery Meeting" }}
+                    {{
+                        isSubmittingMeeting
+                            ? "Submitting…"
+                            : canRequestMeeting
+                              ? "Request Discovery Meeting"
+                              : "Complete required steps first"
+                    }}
                 </button>
             </div>
         </section>
