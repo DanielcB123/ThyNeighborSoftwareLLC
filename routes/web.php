@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OnboardingMeetingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -151,7 +152,7 @@ Route::get('/', function (Request $request) use ($demoTenantPublicBlocks) {
                     'heading' => 'Public websites, customer portals, and operational platforms designed as one cohesive system',
                     'supportingText' => 'WeBuildYouThrive combines creative-direction-level frontend execution with tenant-safe architecture and operational software delivery.',
                     'primaryActionLabel' => 'Schedule A Technical Discovery Session',
-                    'primaryActionPath' => '/contact',
+                    'primaryActionPath' => '/onboarding',
                     'secondaryActionLabel' => 'Review Service Capabilities',
                     'secondaryActionPath' => '/services',
                 ],
@@ -231,7 +232,7 @@ Route::get('/services', function () {
                     'heading' => 'Creative direction, frontend craft, and platform engineering under one accountable team',
                     'supportingText' => 'We architect and build customer acquisition surfaces, tenant experiences, and software operations systems that can scale without chaotic rewrites.',
                     'primaryActionLabel' => 'Book A Technical Planning Session',
-                    'primaryActionPath' => '/contact',
+                    'primaryActionPath' => '/onboarding',
                     'secondaryActionLabel' => 'Review Supported Industries',
                     'secondaryActionPath' => '/industries',
                 ],
@@ -374,6 +375,11 @@ Route::get('/contact', function () {
         ],
     ]);
 })->name('platform.contact');
+
+Route::get('/onboarding', [OnboardingMeetingController::class, 'start'])->name('onboarding.start');
+Route::get('/onboarding/{onboardingAppointment:public_id}', [OnboardingMeetingController::class, 'show'])->name('onboarding.show');
+Route::put('/onboarding/{onboardingAppointment:public_id}', [OnboardingMeetingController::class, 'schedule'])->name('onboarding.schedule');
+Route::delete('/onboarding/{onboardingAppointment:public_id}', [OnboardingMeetingController::class, 'cancel'])->name('onboarding.cancel');
 
 Route::get('/tenant-site', function () use ($demoTenantFrontendContext, $demoTenantPublicBlocks) {
     request()->attributes->set(

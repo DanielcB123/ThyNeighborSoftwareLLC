@@ -8,6 +8,7 @@ use App\Shared\Identifiers\UlidPublicIdGenerator;
 use App\Tenancy\ConfigTenantDatabaseSecretProvider;
 use App\Tenancy\Contracts\TenantDatabaseSecretProvider;
 use App\Tenancy\TenantDatabaseConnectionManager;
+use App\Services\Zoom\ZoomClient;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PublicIdGenerator::class, UlidPublicIdGenerator::class);
         $this->app->singleton(TenantDatabaseSecretProvider::class, ConfigTenantDatabaseSecretProvider::class);
+        $this->app->singleton(ZoomClient::class, fn () => new ZoomClient((array) config('services.zoom', [])));
     }
 
     /**
