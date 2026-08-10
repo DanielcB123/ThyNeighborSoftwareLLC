@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Zoom;
 
 use App\Services\Zoom\Exceptions\ZoomIntegrationException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -15,7 +16,7 @@ final class ZoomClient
     private const TOKEN_CACHE_KEY = 'zoom:s2s:access-token';
 
     /**
-     * @param  array{account_id: string|null, client_id: string|null, client_secret: string|null, host_user: string|null}  $zoomConfig
+     * @param  array{account_id: string|null, client_id: string|null, client_secret: string|null, host_user: string|null, verify_ssl: bool|int|string|null}  $zoomConfig
      */
     public function __construct(
         private readonly array $zoomConfig,
@@ -57,6 +58,19 @@ final class ZoomClient
         return $decoded;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getUser(string $userId): array
+    {
+        $response = $this->request('GET', sprintf('/users/%s', rawurlencode($userId)));
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = $response->json();
+
+        return $decoded;
+    }
+
     public function deleteMeeting(string $meetingId): void
     {
         $response = $this->request(
@@ -88,11 +102,19 @@ final class ZoomClient
         $attemptedTokenRefresh = false;
 
         do {
-            $response = $this->zoomApiRequest()
-                ->send($method, sprintf('https://api.zoom.us/v2%s', $uri), array_filter([
-                    'query' => $query !== [] ? $query : null,
-                    'json' => $payload !== [] ? $payload : null,
-                ]));
+            try {
+                $response = $this->zoomApiRequest()
+                    ->send($method, sprintf('https://api.zoom.us/v2%s', $uri), array_filter([
+                        'query' => $query !== [] ? $query : null,
+                        'json' => $payload !== [] ? $payload : null,
+                    ]));
+            } catch (ConnectionException $exception) {
+                throw new ZoomIntegrationException(
+                    sprintf('Zoom API network request failed: %s', $exception->getMessage()),
+                    'Unable to reach Zoom right now. Please try again shortly.',
+                    previous: $exception,
+                );
+            }
 
             if ($response->status() === 401 && ! $attemptedTokenRefresh) {
                 Cache::forget(self::TOKEN_CACHE_KEY);
@@ -117,6 +139,9 @@ final class ZoomClient
         return Http::acceptJson()
             ->asJson()
             ->timeout(20)
+            ->withOptions([
+                'verify' => $this->verifySslCertificates(),
+            ])
             ->withToken($this->accessToken());
     }
 
@@ -129,22 +154,48 @@ final class ZoomClient
             return $cachedToken;
         }
 
-        $response = Http::asForm()
-            ->acceptJson()
-            ->withBasicAuth(
-                (string) $this->zoomConfig['client_id'],
-                (string) $this->zoomConfig['client_secret'],
-            )
-            ->timeout(15)
-            ->post('https://zoom.us/oauth/token', [
-                'grant_type' => 'account_credentials',
-                'account_id' => (string) $this->zoomConfig['account_id'],
-            ]);
+        try {
+            $response = Http::asForm()
+                ->acceptJson()
+                ->withBasicAuth(
+                    (string) $this->zoomConfig['client_id'],
+                    (string) $this->zoomConfig['client_secret'],
+                )
+                ->withOptions([
+                    'verify' => $this->verifySslCertificates(),
+                ])
+                ->timeout(15)
+                ->post('https://zoom.us/oauth/token', [
+                    'grant_type' => 'account_credentials',
+                    'account_id' => (string) $this->zoomConfig['account_id'],
+                ]);
+        } catch (ConnectionException $exception) {
+            throw new ZoomIntegrationException(
+                sprintf('Zoom OAuth network request failed: %s', $exception->getMessage()),
+                'Unable to reach Zoom right now. Please try again shortly.',
+                previous: $exception,
+            );
+        }
 
         if ($response->failed()) {
+            $statusCode = $response->status();
+            $zoomReason = trim((string) ($response->json('reason') ?? ''));
+            $zoomError = trim((string) ($response->json('error') ?? ''));
+            $zoomMessage = trim((string) ($response->json('message') ?? ''));
+
+            $debugDetails = implode(', ', array_filter([
+                $zoomReason !== '' ? sprintf('reason=%s', $zoomReason) : null,
+                $zoomError !== '' ? sprintf('error=%s', $zoomError) : null,
+                $zoomMessage !== '' ? sprintf('message=%s', $zoomMessage) : null,
+            ]));
+
             throw new ZoomIntegrationException(
-                'Zoom OAuth token request failed.',
-                'Zoom authentication failed. Please try again shortly.',
+                sprintf(
+                    'Zoom OAuth token request failed with status [%d]%s.',
+                    $statusCode,
+                    $debugDetails !== '' ? sprintf(' (%s)', $debugDetails) : ''
+                ),
+                'Zoom authentication failed. Please verify account credentials and app activation.',
             );
         }
 
@@ -173,6 +224,15 @@ final class ZoomClient
                 );
             }
         }
+    }
+
+    private function verifySslCertificates(): bool
+    {
+        return filter_var(
+            $this->zoomConfig['verify_ssl'] ?? true,
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE
+        ) ?? true;
     }
 
     private function exceptionFromResponse(Response $response): ZoomIntegrationException
