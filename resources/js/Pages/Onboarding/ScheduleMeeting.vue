@@ -248,7 +248,7 @@ const cancelMeeting = () => {
                             <select
                                 id="timezone"
                                 v-model="form.timezone"
-                                class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="mt-1 block w-full rounded-md border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             >
                                 <option
                                     v-for="timezone in timezoneOptions"

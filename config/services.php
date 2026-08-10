@@ -40,6 +40,7 @@ return [
         'client_id' => env('ZOOM_CLIENT_ID'),
         'client_secret' => env('ZOOM_CLIENT_SECRET'),
         'host_user' => env('ZOOM_HOST_USER'),
+        'verify_ssl' => env('ZOOM_VERIFY_SSL', true),
     ],
 
 ];

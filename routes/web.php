@@ -376,6 +376,13 @@ Route::get('/contact', function () {
     ]);
 })->name('platform.contact');
 
+Route::get('/start-project', function (Request $request) {
+    $query = $request->getQueryString();
+    $destination = '/onboarding'.($query !== null && $query !== '' ? '?'.$query : '');
+
+    return redirect($destination);
+})->name('start-project.start');
+
 Route::get('/onboarding', [OnboardingMeetingController::class, 'start'])->name('onboarding.start');
 Route::get('/onboarding/{onboardingAppointment:public_id}', [OnboardingMeetingController::class, 'show'])->name('onboarding.show');
 Route::put('/onboarding/{onboardingAppointment:public_id}', [OnboardingMeetingController::class, 'schedule'])->name('onboarding.schedule');
