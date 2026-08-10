@@ -13,7 +13,7 @@ const urlBuilder = useUrlBuilder();
 const navigationItems = usePrimaryNavigation();
 
 const homeUrl = computed(() => urlBuilder.platformPublic("/"));
-const strategyCallUrl = computed(() => urlBuilder.platformPublic("/contact"));
+const startProjectUrl = computed(() => urlBuilder.platformPublic("/start-project"));
 </script>
 
 <template>
@@ -30,8 +30,8 @@ const strategyCallUrl = computed(() => urlBuilder.platformPublic("/contact"));
                     :items="navigationItems"
                     aria-label="Platform primary navigation"
                 />
-                <a :href="strategyCallUrl" class="wb-button wb-button--primary">
-                    Book Strategy Call
+                <a :href="startProjectUrl" class="wb-button wb-button--primary">
+                    Start Your Project
                 </a>
             </div>
         </header>
@@ -59,10 +59,13 @@ const strategyCallUrl = computed(() => urlBuilder.platformPublic("/contact"));
                 </p>
                 <div class="flex flex-wrap gap-3">
                     <a :href="homeUrl" class="wb-button wb-button--ghost">Explore Work</a>
-                    <a :href="strategyCallUrl" class="wb-button wb-button--accent">
-                        Start Discovery
+                    <a :href="startProjectUrl" class="wb-button wb-button--accent">
+                        Start Your Project
                     </a>
                 </div>
+                <p class="wb-body-s text-[var(--color-text-muted)]">
+                    Prefer email? <a href="mailto:hello@webuildyouthrive.com" class="underline">hello@webuildyouthrive.com</a>
+                </p>
             </div>
         </footer>
     </div>
