@@ -9,28 +9,30 @@ use App\Enums\Onboarding\InquirySpamDisposition;
 use App\Enums\Onboarding\InquirySubmissionStatus;
 use App\Enums\Onboarding\LeadPriority;
 use App\Enums\Onboarding\LeadStatus;
-use App\Enums\Onboarding\ProspectTaskStatus;
-use App\Enums\Onboarding\ProspectTaskType;
 use App\Enums\Onboarding\ProspectWorkspaceAccessScope;
 use App\Enums\Onboarding\ProspectWorkspaceMemberRole;
 use App\Enums\Onboarding\ProspectWorkspaceMemberStatus;
 use App\Enums\Onboarding\ProspectWorkspaceStatus;
-use App\Models\Central\DiscoveryMeeting;
+use App\Models\Central\DiscoveryMeetingRequest;
 use App\Models\Central\InquirySubmission;
+use App\Models\Central\Lead;
 use App\Models\Central\LeadProjectInterest;
 use App\Models\Central\LeadSource;
 use App\Models\Central\OnboardingResponse;
+use App\Models\Central\OnboardingSubmission;
 use App\Models\Central\OnboardingSession;
-use App\Models\Central\Prospect;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ProspectOnboardingService
 {
+    public function __construct(private readonly DiscoverySessionWorkflow $workflow) {}
+
     /**
      * @var list<string>
      */
@@ -182,14 +184,33 @@ class ProspectOnboardingService
         ?string $ipAddress,
         ?string $userAgent
     ): OnboardingSession {
-        if (is_string($accessToken) && trim($accessToken) !== '') {
+        if (is_string($accessToken) && $this->isValidSessionToken($accessToken)) {
             $existing = OnboardingSession::query()
                 ->where('access_token', trim($accessToken))
-                ->with(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
+                ->with(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
                 ->first();
 
             if ($existing !== null) {
                 return $existing;
+            }
+        }
+
+        if (is_string($ipAddress) && is_string($userAgent) && trim($userAgent) !== '') {
+            $existingFingerprintSession = OnboardingSession::query()
+                ->where('last_activity_ip', $ipAddress)
+                ->where('last_activity_user_agent', $userAgent)
+                ->whereIn('status', [
+                    DiscoverySessionStatus::Draft->value,
+                    DiscoverySessionStatus::ProjectDiscoveryInProgress->value,
+                    DiscoverySessionStatus::ClarificationRequested->value,
+                    DiscoverySessionStatus::ClientRevisionInProgress->value,
+                ])
+                ->latest('updated_at')
+                ->with(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
+                ->first();
+
+            if ($existingFingerprintSession !== null) {
+                return $existingFingerprintSession;
             }
         }
 
@@ -211,13 +232,13 @@ class ProspectOnboardingService
                 'submitted_at' => now(),
             ]);
 
-            $prospect = Prospect::query()->create([
+            $lead = Lead::query()->create([
                 'inquiry_submission_id' => $inquiry->id,
                 'status' => LeadStatus::New->value,
                 'priority' => LeadPriority::Normal->value,
             ]);
 
-            $workspace = $prospect->activeWorkspace()->create([
+            $workspace = $lead->activeWorkspace()->create([
                 'status' => ProspectWorkspaceStatus::Active->value,
                 'access_scope' => ProspectWorkspaceAccessScope::InvitedOnly->value,
                 'active_workspace_key' => 1,
@@ -226,24 +247,28 @@ class ProspectOnboardingService
             ]);
 
             $session = OnboardingSession::query()->create([
-                'lead_id' => $prospect->id,
+                'lead_id' => $lead->id,
                 'prospect_workspace_id' => $workspace->id,
                 'access_token' => Str::random(64),
-                'status' => DiscoverySessionStatus::InProgress->value,
+                'status' => DiscoverySessionStatus::Draft->value,
                 'current_step' => 1,
                 'last_activity_ip' => $ipAddress,
                 'last_activity_user_agent' => $userAgent,
             ]);
 
-            return $session->load(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
+            return $session->load(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
         });
     }
 
     public function requireSessionByToken(string $accessToken): OnboardingSession
     {
+        if (! $this->isValidSessionToken($accessToken)) {
+            throw new ModelNotFoundException('Onboarding session was not found.');
+        }
+
         $session = OnboardingSession::query()
             ->where('access_token', $accessToken)
-            ->with(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
+            ->with(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members'])
             ->first();
 
         if ($session === null) {
@@ -269,7 +294,9 @@ class ProspectOnboardingService
             throw new \InvalidArgumentException('Unknown onboarding step key provided.');
         }
 
-        $session->loadMissing(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
+        $session->loadMissing(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
+
+        $this->workflow->ensureStepCanBeSaved($session, $normalizedStepKey);
 
         DB::transaction(function () use (
             $session,
@@ -312,10 +339,11 @@ class ProspectOnboardingService
                 'last_activity_user_agent' => $userAgent,
             ])->save();
 
-            $this->syncProspectFromStep($session, $normalizedStepKey, $payload);
+            $this->syncLeadFromStep($session, $normalizedStepKey, $payload);
+            $this->workflow->markProgressStarted($session);
         });
 
-        return $session->fresh(['prospect.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
+        return $session->fresh(['lead.contacts', 'responses', 'discoveryMeeting', 'workspace.members']);
     }
 
     /**
@@ -326,42 +354,47 @@ class ProspectOnboardingService
         array $payload,
         ?string $ipAddress,
         ?string $userAgent,
-    ): DiscoveryMeeting {
+    ): DiscoveryMeetingRequest {
         $session = $this->saveStep($session, 'meeting', $payload, $ipAddress, $userAgent);
 
-        $meeting = DB::transaction(function () use ($session, $payload): DiscoveryMeeting {
-            /** @var Prospect $prospect */
-            $prospect = $session->prospect;
+        $meeting = DB::transaction(function () use ($session, $payload): DiscoveryMeetingRequest {
+            /** @var Lead $lead */
+            $lead = $session->lead;
 
-            $meeting = DiscoveryMeeting::query()->updateOrCreate(
+            $meeting = DiscoveryMeetingRequest::query()->updateOrCreate(
                 ['discovery_session_id' => $session->id],
                 [
                     'prospect_workspace_id' => $session->prospect_workspace_id,
-                    'lead_id' => $prospect->id,
-                    'task_type' => ProspectTaskType::DiscoveryMeeting->value,
-                    'status' => ProspectTaskStatus::Requested->value,
-                    'title' => 'Discovery meeting requested',
-                    'description' => 'Prospect requested scheduling from onboarding flow.',
+                    'lead_id' => $lead->id,
+                    'status' => 'requested',
                     'meeting_format' => (string) Arr::get($payload, 'meetingFormat', 'video'),
                     'timezone' => (string) Arr::get($payload, 'timezone', 'UTC'),
                     'preferred_start_date' => Arr::get($payload, 'preferredStartDate'),
                     'preferred_end_date' => Arr::get($payload, 'preferredEndDate'),
                     'availability_notes' => Arr::get($payload, 'availabilityNotes'),
                     'duration_minutes' => 45,
-                    'task_payload' => [
+                    'request_payload' => [
                         'attendees' => Arr::wrap(Arr::get($payload, 'attendees', [])),
                     ],
+                    'requested_at' => now(),
                 ]
             );
 
-            $session->forceFill([
-                'status' => DiscoverySessionStatus::DiscoveryComplete->value,
-                'current_step' => 5,
-                'last_saved_at' => now(),
-                'completed_at' => now(),
-            ])->save();
+            $this->workflow->transition(
+                $session,
+                DiscoverySessionStatus::MeetingRequested,
+                DiscoverySessionWorkflow::ACTOR_CLIENT
+            );
 
-            $prospect->forceFill([
+            $this->createSubmissionSnapshot($session, $meeting);
+
+            $this->workflow->transition(
+                $session->refresh(),
+                DiscoverySessionStatus::Submitted,
+                DiscoverySessionWorkflow::ACTOR_SYSTEM
+            );
+
+            $lead->forceFill([
                 'status' => LeadStatus::DiscoveryComplete->value,
                 'discovery_completed_at' => now(),
             ])->save();
@@ -469,15 +502,17 @@ class ProspectOnboardingService
      *   sessionToken: string,
      *   workspacePublicId: string,
      *   resumeUrl: string,
+     *   meetingRequestPublicId: string|null,
      *   status: string,
      *   currentStep: int,
      *   lastSavedAt: string|null,
-     *   responses: array<string, array<string, mixed>>
+     *   responses: array<string, array<string, mixed>>,
+     *   capabilities: array<string, mixed>
      * }
      */
     public function sessionSnapshot(OnboardingSession $session): array
     {
-        $session->loadMissing(['responses']);
+        $session->loadMissing(['responses', 'discoveryMeeting']);
 
         /** @var Collection<int, OnboardingResponse> $responses */
         $responses = $session->responses;
@@ -496,35 +531,37 @@ class ProspectOnboardingService
             'sessionToken' => (string) $session->access_token,
             'workspacePublicId' => (string) $session->public_id,
             'resumeUrl' => url('/start-project?session='.$session->access_token),
+            'meetingRequestPublicId' => $session->discoveryMeeting?->public_id,
             'status' => (string) $session->status,
             'currentStep' => (int) $session->current_step,
             'lastSavedAt' => $session->last_saved_at?->toIso8601String(),
             'responses' => $responseMap,
+            'capabilities' => $this->workflow->capabilities($session),
         ];
     }
 
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function syncProspectFromStep(
+    private function syncLeadFromStep(
         OnboardingSession $session,
         string $stepKey,
         array $payload
     ): void {
-        /** @var Prospect $prospect */
-        $prospect = $session->prospect;
+        /** @var Lead $lead */
+        $lead = $session->lead;
 
         if ($stepKey === 'project') {
             $projectDirection = Arr::get($payload, 'projectDirection');
 
-            $prospect->forceFill([
+            $lead->forceFill([
                 'project_direction' => $projectDirection,
             ])->save();
 
             if (is_string($projectDirection) && $projectDirection !== '') {
                 LeadProjectInterest::query()->updateOrCreate(
                     [
-                        'lead_id' => $prospect->id,
+                        'lead_id' => $lead->id,
                         'project_type' => $projectDirection,
                     ],
                     ['summary' => Arr::get($payload, 'projectDirectionNotes')]
@@ -539,13 +576,19 @@ class ProspectOnboardingService
         }
 
         $businessEmail = (string) Arr::get($payload, 'businessEmail', '');
+        $normalizedBusinessEmail = $this->normalizeEmail($businessEmail);
+        $this->guardAgainstDuplicateActiveIntake(
+            $session,
+            $lead,
+            $normalizedBusinessEmail
+        );
 
-        $prospect->forceFill([
+        $lead->forceFill([
             'primary_contact_name' => Arr::get($payload, 'contactName'),
             'primary_contact_role' => Arr::get($payload, 'roleInBusiness'),
             'business_name' => Arr::get($payload, 'businessName'),
             'primary_email' => $businessEmail !== '' ? $businessEmail : null,
-            'normalized_primary_email' => $this->normalizeEmail($businessEmail),
+            'normalized_primary_email' => $normalizedBusinessEmail,
             'primary_phone' => Arr::get($payload, 'phone'),
             'industry' => Arr::get($payload, 'industry'),
             'industry_other' => Arr::get($payload, 'industryOther'),
@@ -554,22 +597,22 @@ class ProspectOnboardingService
             'employee_range' => Arr::get($payload, 'teamSize'),
         ])->save();
 
-        $prospect->inquirySubmission?->update([
+        $lead->inquirySubmission?->update([
             'contact_name' => Arr::get($payload, 'contactName'),
             'business_name' => Arr::get($payload, 'businessName'),
             'email' => $businessEmail !== '' ? $businessEmail : null,
-            'normalized_email' => $this->normalizeEmail($businessEmail),
+            'normalized_email' => $normalizedBusinessEmail,
             'phone' => Arr::get($payload, 'phone'),
             'status' => InquirySubmissionStatus::Reviewed->value,
             'submitted_at' => now(),
         ]);
 
-        $prospect->contacts()->delete();
+        $lead->contacts()->delete();
 
-        $prospect->contacts()->create([
+        $lead->contacts()->create([
             'name' => Arr::get($payload, 'contactName'),
             'email' => $businessEmail !== '' ? $businessEmail : null,
-            'normalized_email' => $this->normalizeEmail($businessEmail),
+            'normalized_email' => $normalizedBusinessEmail,
             'phone' => Arr::get($payload, 'phone'),
             'role' => Arr::get($payload, 'roleInBusiness'),
             'contact_method' => 'email',
@@ -602,7 +645,7 @@ class ProspectOnboardingService
                 continue;
             }
 
-            $prospect->contacts()->create([
+            $lead->contacts()->create([
                 'name' => $name !== '' ? $name : 'Additional Stakeholder',
                 'email' => $email !== '' ? $email : null,
                 'normalized_email' => $this->normalizeEmail($email),
@@ -626,10 +669,89 @@ class ProspectOnboardingService
             }
         }
 
-        $prospect->forceFill([
+        $lead->forceFill([
             'status' => LeadStatus::WorkspaceActive->value,
             'converted_to_workspace_at' => now(),
         ])->save();
+    }
+
+    private function createSubmissionSnapshot(
+        OnboardingSession $session,
+        DiscoveryMeetingRequest $meeting
+    ): OnboardingSubmission {
+        $responses = $session->responses()
+            ->get(['question_key', 'response_payload'])
+            ->mapWithKeys(static fn (OnboardingResponse $response): array => [
+                $response->question_key => is_array($response->response_payload)
+                    ? $response->response_payload
+                    : [],
+            ])
+            ->all();
+
+        $latestVersion = (int) OnboardingSubmission::query()
+            ->where('discovery_session_id', $session->id)
+            ->max('version_number');
+
+        return OnboardingSubmission::query()->create([
+            'discovery_session_id' => $session->id,
+            'version_number' => $latestVersion + 1,
+            'submitted_payload' => [
+                'responses' => $responses,
+                'meetingRequestPublicId' => $meeting->public_id,
+                'sessionStatus' => DiscoverySessionStatus::Submitted->value,
+            ],
+            'submitted_at' => now(),
+        ]);
+    }
+
+    private function guardAgainstDuplicateActiveIntake(
+        OnboardingSession $session,
+        Lead $lead,
+        ?string $normalizedBusinessEmail
+    ): void {
+        if ($normalizedBusinessEmail === null || $normalizedBusinessEmail === '') {
+            return;
+        }
+
+        $duplicateSession = OnboardingSession::query()
+            ->where('id', '!=', $session->id)
+            ->whereIn('status', [
+                DiscoverySessionStatus::Draft->value,
+                DiscoverySessionStatus::ProjectDiscoveryInProgress->value,
+                DiscoverySessionStatus::MeetingRequested->value,
+                DiscoverySessionStatus::Submitted->value,
+                DiscoverySessionStatus::UnderInternalReview->value,
+                DiscoverySessionStatus::ClarificationRequested->value,
+                DiscoverySessionStatus::ClientRevisionInProgress->value,
+            ])
+            ->whereHas('lead', static function ($query) use ($normalizedBusinessEmail, $lead): void {
+                $query->where('normalized_primary_email', $normalizedBusinessEmail)
+                    ->where('id', '!=', $lead->id);
+            })
+            ->first();
+
+        if ($duplicateSession === null) {
+            return;
+        }
+
+        if ($lead->inquirySubmission !== null) {
+            $context = Arr::wrap($lead->inquirySubmission->context);
+            $context['duplicateOfSessionPublicId'] = $duplicateSession->public_id;
+
+            $lead->inquirySubmission->update([
+                'status' => InquirySubmissionStatus::Archived->value,
+                'context' => $context,
+            ]);
+        }
+
+        throw ValidationException::withMessages([
+            'payload.businessEmail' => [
+                sprintf(
+                    'An active onboarding draft already exists for this email. Resume it here: %s',
+                    url('/start-project?session='.$duplicateSession->access_token)
+                ),
+            ],
+        ]);
     }
 
     private function stepNumberForKey(string $stepKey): int
@@ -652,5 +774,10 @@ class ProspectOnboardingService
         $normalized = strtolower(trim($email));
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    private function isValidSessionToken(string $accessToken): bool
+    {
+        return preg_match('/^[A-Za-z0-9]{64}$/', trim($accessToken)) === 1;
     }
 }

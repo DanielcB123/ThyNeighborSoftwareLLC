@@ -17,8 +17,13 @@ class StartProjectController extends Controller
         ProspectOnboardingService $prospectOnboardingService
     ): Response {
         $sessionToken = $request->query('session');
+        $cookieToken = $request->cookie('start_project_session');
+        $resolvedToken = is_string($sessionToken) && trim($sessionToken) !== ''
+            ? $sessionToken
+            : (is_string($cookieToken) ? $cookieToken : null);
+
         $session = $prospectOnboardingService->startOrResumeSession(
-            is_string($sessionToken) ? $sessionToken : null,
+            $resolvedToken,
             $request->ip(),
             $request->userAgent(),
         );

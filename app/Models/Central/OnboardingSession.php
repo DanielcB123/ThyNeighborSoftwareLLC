@@ -46,11 +46,11 @@ class OnboardingSession extends CentralModel
     }
 
     /**
-     * @return BelongsTo<Prospect, $this>
+     * @return BelongsTo<Lead, $this>
      */
-    public function prospect(): BelongsTo
+    public function lead(): BelongsTo
     {
-        return $this->belongsTo(Prospect::class, 'lead_id');
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     /**
@@ -70,10 +70,20 @@ class OnboardingSession extends CentralModel
     }
 
     /**
-     * @return HasOne<DiscoveryMeeting, $this>
+     * @return HasOne<DiscoveryMeetingRequest, $this>
      */
     public function discoveryMeeting(): HasOne
     {
-        return $this->hasOne(DiscoveryMeeting::class, 'discovery_session_id');
+        return $this->hasOne(DiscoveryMeetingRequest::class, 'discovery_session_id');
+    }
+
+    /**
+     * @deprecated Prefer {@see self::lead()}.
+     *
+     * @return BelongsTo<Lead, $this>
+     */
+    public function prospect(): BelongsTo
+    {
+        return $this->lead();
     }
 }

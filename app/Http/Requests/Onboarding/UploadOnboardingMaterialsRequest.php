@@ -19,7 +19,7 @@ class UploadOnboardingMaterialsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sessionToken' => ['required', 'string', 'max:80', 'exists:discovery_sessions,access_token'],
+            'sessionToken' => ['required', 'string', 'regex:/^[A-Za-z0-9]{64}$/'],
             'materials' => ['required', 'array', 'min:1', 'max:5'],
             'materials.*' => [
                 'required',
