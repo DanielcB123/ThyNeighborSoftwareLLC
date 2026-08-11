@@ -13,6 +13,19 @@ use Illuminate\Validation\Validator;
 
 class ScheduleOnboardingMeetingRequest extends FormRequest
 {
+    /**
+     * @var list<string>
+     */
+    private const USA_TIMEZONES = [
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Phoenix',
+        'America/Los_Angeles',
+        'America/Anchorage',
+        'Pacific/Honolulu',
+    ];
+
     public function authorize(): bool
     {
         $appointment = $this->route('onboardingAppointment');
@@ -44,7 +57,7 @@ class ScheduleOnboardingMeetingRequest extends FormRequest
             'contact_email' => ['required', 'email:rfc', 'max:255'],
             'meeting_date' => ['required', 'date_format:Y-m-d'],
             'meeting_time' => ['required', 'date_format:H:i'],
-            'timezone' => ['required', 'timezone:all'],
+            'timezone' => ['required', 'timezone:all', Rule::in(self::USA_TIMEZONES)],
             'duration_minutes' => ['required', 'integer', 'min:15', 'max:180'],
         ];
     }
