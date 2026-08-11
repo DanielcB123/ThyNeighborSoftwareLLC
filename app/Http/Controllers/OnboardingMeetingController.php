@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CancelOnboardingMeetingRequest;
 use App\Http\Requests\ScheduleOnboardingMeetingRequest;
 use App\Models\Central\OnboardingAppointment;
+use App\Models\Central\OnboardingSession;
+use App\Onboarding\Services\ProspectOnboardingService;
 use App\Services\Onboarding\Data\OnboardingMeetingScheduleData;
 use App\Services\Onboarding\OnboardingMeetingScheduler;
 use App\Services\Zoom\Exceptions\ZoomIntegrationException;
@@ -19,8 +21,33 @@ use Throwable;
 
 class OnboardingMeetingController extends Controller
 {
-    public function start(Request $request): RedirectResponse
+    public function start(
+        Request $request,
+        ProspectOnboardingService $prospectOnboardingService
+    ): RedirectResponse
     {
+        $discoverySessionToken = trim((string) $request->query('discovery_session', ''));
+
+        if ($discoverySessionToken !== '') {
+            try {
+                $discoverySession = $prospectOnboardingService->requireSessionByToken($discoverySessionToken);
+                $appointmentPreparation = $prospectOnboardingService->ensureAppointmentForSession($discoverySession);
+                /** @var OnboardingAppointment $appointment */
+                $appointment = $appointmentPreparation['appointment'];
+                $accessToken = (string) $appointmentPreparation['token'];
+
+                $request->session()->put('onboarding.appointment_public_id', $appointment->public_id);
+                $request->session()->put('onboarding.appointment_token', $accessToken);
+
+                return redirect()->route('onboarding.show', [
+                    'onboardingAppointment' => $appointment,
+                    'token' => $accessToken,
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
         $appointmentPublicId = (string) $request->session()->get('onboarding.appointment_public_id', '');
         $token = (string) $request->session()->get('onboarding.appointment_token', '');
 
@@ -58,15 +85,28 @@ class OnboardingMeetingController extends Controller
         ]);
     }
 
-    public function show(Request $request, OnboardingAppointment $onboardingAppointment): Response
+    public function show(
+        Request $request,
+        OnboardingAppointment $onboardingAppointment,
+        ProspectOnboardingService $prospectOnboardingService
+    ): Response
     {
         $this->ensureAuthorizedAccess($request, $onboardingAppointment);
+
+        /** @var OnboardingSession|null $linkedSession */
+        $linkedSession = OnboardingSession::query()
+            ->where('onboarding_appointment_id', $onboardingAppointment->id)
+            ->with('responses')
+            ->first();
 
         return Inertia::render('Onboarding/ScheduleMeeting', [
             'appointment' => $this->presentAppointment($onboardingAppointment),
             'token' => $this->accessToken($request),
             'timezoneOptions' => DateTimeZone::listIdentifiers(),
             'status' => session('status'),
+            'intakeSummary' => $linkedSession === null
+                ? null
+                : $prospectOnboardingService->intakeSummary($linkedSession),
         ]);
     }
 

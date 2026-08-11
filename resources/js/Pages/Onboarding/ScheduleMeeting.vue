@@ -25,6 +25,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    intakeSummary: {
+        type: Object,
+        default: null,
+    },
 });
 
 const formatDateForInput = (isoString, timezone) => {
@@ -113,6 +117,21 @@ const cancelMeeting = () => {
         },
     });
 };
+
+const selectedProjectTypes = computed(() => {
+    const value = props.intakeSummary?.project?.projectTypes;
+    return Array.isArray(value) ? value : [];
+});
+
+const selectedFeatures = computed(() => {
+    const value = props.intakeSummary?.features?.requestedFeatures;
+    return Array.isArray(value) ? value : [];
+});
+
+const selectedAssets = computed(() => {
+    const value = props.intakeSummary?.assets?.existingAssets;
+    return Array.isArray(value) ? value : [];
+});
 </script>
 
 <template>
@@ -138,6 +157,89 @@ const cancelMeeting = () => {
                     class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
                 >
                     Your discovery call has been cancelled.
+                </div>
+            </div>
+
+            <div
+                v-if="intakeSummary"
+                class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-6 shadow-sm"
+            >
+                <h2 class="text-lg font-semibold text-indigo-950">Client discovery briefing</h2>
+                <p class="mt-1 text-sm text-indigo-900/80">
+                    Submitted intake responses for meeting preparation.
+                </p>
+
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Business
+                        </p>
+                        <p class="mt-2 text-sm text-gray-800">
+                            {{ intakeSummary.business?.businessName || "—" }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            {{ intakeSummary.business?.contactName || "—" }}
+                            ·
+                            {{ intakeSummary.business?.businessEmail || "—" }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Project type
+                        </p>
+                        <p class="mt-2 text-sm text-gray-800">
+                            {{ selectedProjectTypes.length > 0 ? selectedProjectTypes.join(", ") : "—" }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3 md:col-span-2">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Goals / overview
+                        </p>
+                        <p class="mt-2 whitespace-pre-line text-sm text-gray-700">
+                            {{ intakeSummary.overview?.businessGoals || intakeSummary.overview?.whatToBuild || "—" }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Requested features
+                        </p>
+                        <p class="mt-2 text-sm text-gray-700">
+                            {{ selectedFeatures.length > 0 ? selectedFeatures.join(", ") : "—" }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Existing assets
+                        </p>
+                        <p class="mt-2 text-sm text-gray-700">
+                            {{ selectedAssets.length > 0 ? selectedAssets.join(", ") : "—" }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Timeline
+                        </p>
+                        <p class="mt-2 text-sm text-gray-700">
+                            {{ intakeSummary.timeline?.timelineExpectation || "—" }}
+                            <span v-if="intakeSummary.timeline?.urgency">
+                                · {{ intakeSummary.timeline.urgency }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="rounded-md border border-indigo-100 bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                            Additional notes
+                        </p>
+                        <p class="mt-2 whitespace-pre-line text-sm text-gray-700">
+                            {{ intakeSummary.additional?.additionalNotes || "—" }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
