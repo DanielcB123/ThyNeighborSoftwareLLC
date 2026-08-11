@@ -12,7 +12,6 @@ use App\Onboarding\Services\ProspectOnboardingService;
 use App\Services\Onboarding\Data\OnboardingMeetingScheduleData;
 use App\Services\Onboarding\OnboardingMeetingScheduler;
 use App\Services\Zoom\Exceptions\ZoomIntegrationException;
-use DateTimeZone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,6 +20,19 @@ use Throwable;
 
 class OnboardingMeetingController extends Controller
 {
+    /**
+     * @var list<string>
+     */
+    private const USA_TIMEZONES = [
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Phoenix',
+        'America/Los_Angeles',
+        'America/Anchorage',
+        'Pacific/Honolulu',
+    ];
+
     public function start(
         Request $request,
         ProspectOnboardingService $prospectOnboardingService
@@ -102,7 +114,7 @@ class OnboardingMeetingController extends Controller
         return Inertia::render('Onboarding/ScheduleMeeting', [
             'appointment' => $this->presentAppointment($onboardingAppointment),
             'token' => $this->accessToken($request),
-            'timezoneOptions' => DateTimeZone::listIdentifiers(),
+            'timezoneOptions' => self::USA_TIMEZONES,
             'status' => session('status'),
             'intakeSummary' => $linkedSession === null
                 ? null

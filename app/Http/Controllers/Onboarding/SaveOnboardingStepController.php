@@ -29,7 +29,10 @@ class SaveOnboardingStepController extends Controller
 
         return response()->json([
             'saved' => true,
-            'session' => $prospectOnboardingService->sessionSnapshot($updatedSession),
+            'session' => $prospectOnboardingService->sessionSnapshot(
+                $updatedSession,
+                includeResponses: false
+            ),
         ]);
     }
 }

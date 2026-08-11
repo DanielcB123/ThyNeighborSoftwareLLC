@@ -220,7 +220,6 @@ class ProspectOnboardingService
         if (is_string($accessToken) && $this->isValidSessionToken($accessToken)) {
             $existing = OnboardingSession::query()
                 ->where('access_token', trim($accessToken))
-                ->with(['prospect.contacts', 'responses', 'onboardingAppointment'])
                 ->first();
 
             if ($existing !== null) {
@@ -234,7 +233,6 @@ class ProspectOnboardingService
                 ->where('last_activity_user_agent', $userAgent)
                 ->where('status', '!=', 'intake_completed')
                 ->latest('updated_at')
-                ->with(['prospect.contacts', 'responses', 'onboardingAppointment'])
                 ->first();
 
             if ($existingFingerprintSession !== null) {
@@ -256,7 +254,7 @@ class ProspectOnboardingService
                 'last_activity_user_agent' => $userAgent,
             ]);
 
-            return $session->load(['prospect.contacts', 'responses', 'onboardingAppointment']);
+            return $session;
         });
     }
 
@@ -268,7 +266,6 @@ class ProspectOnboardingService
 
         $session = OnboardingSession::query()
             ->where('access_token', $accessToken)
-            ->with(['prospect.contacts', 'responses', 'onboardingAppointment'])
             ->first();
 
         if ($session === null) {
@@ -294,8 +291,6 @@ class ProspectOnboardingService
             throw new \InvalidArgumentException('Unknown onboarding step key provided.');
         }
 
-        $session->loadMissing(['prospect.contacts', 'responses', 'onboardingAppointment']);
-
         DB::transaction(function () use (
             $session,
             $normalizedStepKey,
@@ -303,19 +298,39 @@ class ProspectOnboardingService
             $ipAddress,
             $userAgent
         ): void {
-            /** @var OnboardingResponse $response */
-            $response = $session->responses()->updateOrCreate(
-                ['step_key' => $normalizedStepKey],
-                [
-                    'response_payload' => $payload,
-                    'completed_at' => now(),
-                ]
-            );
+            $responseId = OnboardingResponse::query()
+                ->where('onboarding_session_id', $session->id)
+                ->where('step_key', $normalizedStepKey)
+                ->value('id');
 
-            $nextRevision = ((int) $response->revisions()->max('revision_number')) + 1;
+            if ($responseId !== null) {
+                $responseId = (int) $responseId;
+                OnboardingResponse::query()
+                    ->where('id', $responseId)
+                    ->update([
+                        'response_payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+                        'completed_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                /** @var int $createdResponseId */
+                $createdResponseId = (int) OnboardingResponse::query()->insertGetId([
+                    'onboarding_session_id' => $session->id,
+                    'step_key' => $normalizedStepKey,
+                    'response_payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+                    'completed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $responseId = $createdResponseId;
+            }
+
+            $nextRevision = ((int) OnboardingResponseRevision::query()
+                ->where('onboarding_response_id', $responseId)
+                ->max('revision_number')) + 1;
 
             OnboardingResponseRevision::query()->create([
-                'onboarding_response_id' => $response->id,
+                'onboarding_response_id' => $responseId,
                 'revision_number' => $nextRevision,
                 'response_payload' => $payload,
                 'changed_at' => now(),
@@ -333,7 +348,7 @@ class ProspectOnboardingService
             $this->syncProspectFromStep($session, $normalizedStepKey, $payload);
         });
 
-        return $session->fresh(['prospect.contacts', 'responses', 'onboardingAppointment']);
+        return $session->fresh() ?? $session;
     }
 
     /**
@@ -364,7 +379,7 @@ class ProspectOnboardingService
 
     public function canContinueToScheduling(OnboardingSession $session): bool
     {
-        $completedSteps = $this->completedStepKeys($session);
+        $completedSteps = $this->completedStepKeysQuery($session);
 
         foreach (self::REQUIRED_FOR_SCHEDULING as $requiredStep) {
             if (! in_array($requiredStep, $completedSteps, true)) {
@@ -397,7 +412,7 @@ class ProspectOnboardingService
             'completed_at' => now(),
         ])->save();
 
-        return $session->fresh(['prospect.contacts', 'responses', 'onboardingAppointment']);
+        return $session->fresh() ?? $session;
     }
 
     /**
@@ -405,7 +420,7 @@ class ProspectOnboardingService
      */
     public function ensureAppointmentForSession(OnboardingSession $session): array
     {
-        $session->loadMissing(['responses', 'onboardingAppointment']);
+        $session->loadMissing(['prospect', 'onboardingAppointment']);
         $responseMap = $this->responseMap($session);
 
         $businessPayload = Arr::wrap($responseMap['business'] ?? []);
@@ -506,10 +521,12 @@ class ProspectOnboardingService
      *   }
      * }
      */
-    public function sessionSnapshot(OnboardingSession $session): array
+    public function sessionSnapshot(OnboardingSession $session, bool $includeResponses = true): array
     {
-        $responseMap = $this->responseMap($session);
-        $completedSteps = $this->completedStepKeys($session);
+        $responseMap = $includeResponses ? $this->responseMap($session) : [];
+        $completedSteps = $includeResponses
+            ? $this->completedStepKeysFromMap($responseMap)
+            : $this->completedStepKeysQuery($session);
 
         return [
             'sessionToken' => (string) $session->access_token,
@@ -536,8 +553,13 @@ class ProspectOnboardingService
         string $stepKey,
         array $payload
     ): void {
+        $session->loadMissing('prospect');
+
         /** @var Prospect $prospect */
         $prospect = $session->prospect;
+        if (! $prospect instanceof Prospect) {
+            return;
+        }
 
         if ($stepKey === 'project') {
             $projectTypes = Arr::wrap(Arr::get($payload, 'projectTypes', []));
@@ -594,28 +616,52 @@ class ProspectOnboardingService
      */
     private function responseMap(OnboardingSession $session): array
     {
-        $session->loadMissing(['responses']);
+        $responseMap = [];
 
-        /** @var Collection<int, OnboardingResponse> $responses */
-        $responses = $session->responses;
+        foreach (self::STEP_KEYS as $stepKey) {
+            $response = OnboardingResponse::query()
+                ->where('onboarding_session_id', $session->id)
+                ->where('step_key', $stepKey)
+                ->orderByDesc('id')
+                ->first(['id', 'step_key', 'response_payload']);
 
-        return $responses
-            ->mapWithKeys(
-                static fn (OnboardingResponse $response): array => [
-                    $response->step_key => is_array($response->response_payload)
-                        ? $response->response_payload
-                        : [],
-                ]
-            )
-            ->all();
+            if (! $response instanceof OnboardingResponse) {
+                continue;
+            }
+
+            $payload = $response->response_payload;
+            $responseMap[$stepKey] = is_array($payload) ? $payload : [];
+        }
+
+        return $responseMap;
     }
 
     /**
      * @return list<string>
      */
-    private function completedStepKeys(OnboardingSession $session): array
+    private function completedStepKeysQuery(OnboardingSession $session): array
     {
-        return collect($this->responseMap($session))
+        /** @var Collection<int, string> $stepKeys */
+        $stepKeys = OnboardingResponse::query()
+            ->where('onboarding_session_id', $session->id)
+            ->whereIn('step_key', self::STEP_KEYS)
+            ->whereRaw('JSON_LENGTH(response_payload) > 0')
+            ->pluck('step_key');
+
+        return $stepKeys
+            ->map(static fn (mixed $stepKey): string => (string) $stepKey)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $responseMap
+     * @return list<string>
+     */
+    private function completedStepKeysFromMap(array $responseMap): array
+    {
+        return collect($responseMap)
             ->filter(static fn (mixed $payload): bool => is_array($payload) && $payload !== [])
             ->keys()
             ->map(static fn (mixed $key): string => (string) $key)

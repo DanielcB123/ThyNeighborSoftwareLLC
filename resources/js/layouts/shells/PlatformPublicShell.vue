@@ -13,7 +13,7 @@ const urlBuilder = useUrlBuilder();
 const navigationItems = usePrimaryNavigation();
 
 const homeUrl = computed(() => urlBuilder.platformPublic("/"));
-const strategyCallUrl = computed(() => urlBuilder.platformPublic("/contact"));
+const strategyCallUrl = computed(() => urlBuilder.platformPublic("/start-project"));
 </script>
 
 <template>
@@ -31,7 +31,7 @@ const strategyCallUrl = computed(() => urlBuilder.platformPublic("/contact"));
                     aria-label="Platform primary navigation"
                 />
                 <a :href="strategyCallUrl" class="wb-button wb-button--primary">
-                    Book Strategy Call
+                    Start Your Project
                 </a>
             </div>
         </header>
